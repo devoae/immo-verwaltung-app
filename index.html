@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&amp;O Brothers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-elevated: #131313;
+    --sidebar: #0a0a0a;
+    --card: #0f0f0f;
+    --card-hover: #161616;
+    --card-border: #2a2a2a;
+    --card-border-soft: #1c1c1c;
+    --accent: #e8342c;
+    --accent-dim: #7a2622;
+    --accent-strong: #ff4a40;
+    --accent-tint: rgba(232,52,44,.1);
+    --gold: #c9a24a;
+    --text: #ffffff;
+    --muted: #9a9a9a;
+    --muted-dim: #5c5c5c;
+    --green: #4fcf8e;
+    --green-tint: rgba(79,207,142,.1);
+    --red: #e8342c;
+    --red-tint: rgba(232,52,44,.1);
+    --yellow: #e0b84a;
+    --radius-lg: 4px;
+    --radius-md: 3px;
+    --radius-sm: 2px;
+    --shadow-card: none;
+    --shadow-pop: 0 0 0 1px var(--accent-dim);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+  ::selection { background: rgba(232,52,44,.35); }
+
+  .app-shell { display: flex; min-height: 100vh; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    border-right: 1px solid var(--card-border-soft);
+    padding: 32px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .brand { display: flex; align-items: center; gap: 13px; padding: 0 2px 22px; }
+  .brand .mark {
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 0;
+    border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .brand .mark::before, .brand .mark::after {
+    content: ""; position: absolute; width: 5px; height: 5px; border: 1px solid var(--gold);
+  }
+  .brand .mark::before { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+  .brand .mark::after { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+  .brand .mark svg { display: block; }
+  .brand .name { font-weight: 700; font-size: 15px; letter-spacing: .09em; line-height: 1.25; color: var(--text); text-transform: uppercase; font-family: "Fraunces", serif; }
+  .brand .name small { display:block; font-weight: 500; font-size: 9.5px; color: var(--muted); letter-spacing: .14em; margin-top: 4px; text-transform: uppercase; font-family: "Inter", sans-serif; }
+  .brand-divider { height: 1px; background: linear-gradient(90deg, var(--gold) 0%, transparent 85%); opacity: .5; margin: 0 2px 22px; }
+
+  nav.tabs { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+  nav.tabs button {
+    display: flex; align-items: center; gap: 13px;
+    background: none; border: none; border-left: 2px solid transparent; text-align: left;
+    color: var(--muted);
+    padding: 12px 14px;
+    border-radius: 0;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    position: relative;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.tabs button .ico { font-size: 14px; width: 16px; text-align: center; opacity: .7; filter: grayscale(1) brightness(1.6); }
+  nav.tabs button:hover { color: var(--text); }
+  nav.tabs button.active {
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: var(--card);
+  }
+  nav.tabs button.active .ico { opacity: 1; filter: none; }
+  .sidebar-foot {
+    margin-top: auto; padding: 18px 2px 4px; font-size: 10px; color: var(--muted-dim);
+    border-top: 1px solid var(--card-border-soft); line-height: 1.8; letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* ---------- MAIN ---------- */
+  .main { flex: 1; min-width: 0; padding: 44px 50px 110px; max-width: 1260px; }
+  .page-head { margin-bottom: 34px; }
+  .page-head h1 { font-size: 30px; margin: 0 0 8px; font-weight: 800; letter-spacing: -.01em; color: var(--text); text-transform: uppercase; }
+  .sub { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 640px; letter-spacing: .005em; }
+
+  .view { display: none; }
+  .view.active { display: block; animation: fadeslide .35s cubic-bezier(.2,.8,.2,1); }
+  @keyframes fadeslide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .toggle-group { display: inline-flex; border: 1px solid var(--card-border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 4px; }
+  .toggle-btn {
+    background: transparent; border: none; color: var(--muted); padding: 9px 18px;
+    cursor: pointer; font-size: 11.5px; font-family: inherit; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase; transition: background .15s ease, color .15s ease;
+  }
+  .toggle-btn:not(:last-child) { border-right: 1px solid var(--card-border); }
+  .toggle-btn.active { background: var(--accent); color: #fff; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    margin-bottom: 18px;
+  }
+  .card h2 { font-size: 13px; margin: 0 0 18px; color: var(--text); font-weight: 700; display:flex; align-items:center; gap:10px; letter-spacing: .04em; text-transform: uppercase; }
+  .card h3 { font-size: 10.5px; margin: 22px 0 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+
+  /* ---------- Objekt "Listing"-Darstellung ---------- */
+  .listing-hero {
+    position: relative; width: 100%;
+    height: 260px; border-radius: var(--radius-md); overflow: hidden;
+    margin-bottom: 22px;
+    background: #161616;
+    border: 1px solid var(--card-border);
+  }
+  .listing-hero img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(.08) contrast(1.05); }
+  .listing-hero .overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.1) 48%, transparent 72%);
+  }
+  .listing-hero .overlay-text {
+    position: absolute; left: 26px; right: 26px; bottom: 20px; color: #fff;
+  }
+  .listing-hero .overlay-text .addr { font-size: 22px; font-weight: 800; letter-spacing: .01em; text-transform: uppercase; }
+  .listing-hero .overlay-text .meta { font-size: 11px; opacity: .7; margin-top: 5px; letter-spacing: .06em; text-transform: uppercase; }
+  .listing-hero.placeholder { display: flex; align-items: center; justify-content: center; font-size: 36px; filter: grayscale(1) brightness(.6); }
+  .listing-hero .view-btn {
+    position: absolute; right: 18px; bottom: 18px; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 700;
+  }
+
+  .objekt-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .objekt-thumb {
+    width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover;
+    border: 1px solid var(--card-border); flex-shrink: 0;
+    background: var(--bg);
+  }
+  .objekt-thumb.placeholder {
+    display:flex; align-items:center; justify-content:center; font-size:18px; color: var(--muted-dim);
+    background: var(--bg-elevated);
+  }
+  .objekt-photo-large {
+    width: 100%; border-radius: var(--radius-md); border: 1px solid var(--card-border);
+    display: block; margin-bottom: 16px; object-fit: cover; max-height: 300px;
+  }
+
+  .grid-kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 1px;
+    margin-bottom: 22px;
+    background: var(--card-border);
+    border: 1px solid var(--card-border);
+  }
+  .kpi {
+    background: var(--card);
+    border: none;
+    border-radius: 0;
+    padding: 18px 19px;
+    transition: background .15s ease;
+  }
+  .kpi:hover { background: var(--card-hover); }
+  .kpi .label { font-size: 10px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .kpi .value { font-size: 23px; font-weight: 800; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--text); }
+  .kpi .value.green { color: var(--green); }
+  .kpi .value.red { color: var(--red); }
+  .kpi .sub-note { font-size: 10.5px; color: var(--muted-dim); margin-top: 7px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi.hero { background: var(--accent-tint); }
+  .kpi.hero:hover { background: var(--accent-tint); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--card-border-soft); }
+  th { color: var(--muted); font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; }
+  tbody tr { transition: background .12s ease; }
+  tbody tr:hover { background: var(--card-hover); }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .tag.green { background: var(--green-tint); color: var(--green); }
+  .tag.red { background: var(--red-tint); color: var(--red); }
+  .tag.gold { background: rgba(201,162,74,.12); color: var(--gold); }
+  .tag.muted { background: rgba(154,154,154,.1); color: var(--muted); }
+
+  form.inline { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-top: 20px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label { font-size: 9.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .field input, .field select, .field textarea {
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-family: inherit;
+    min-width: 130px;
+    transition: border-color .15s ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .field.wide input, .field.wide textarea { min-width: 230px; }
+  .field.checkbox { flex-direction: row; align-items: center; gap: 8px; }
+  .field.checkbox label { font-size: 13px; color: var(--text); text-transform: none; font-weight: 400; letter-spacing: 0; }
+  .field.checkbox input { min-width: auto; accent-color: var(--accent); width: 16px; height: 16px; }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+    padding: 11px 24px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-family: inherit;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  button.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  button.primary:active { opacity: .85; }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  button.ghost:hover { border-color: var(--text); background: var(--card-hover); }
+  button.danger {
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    color: var(--red);
+    padding: 6px 13px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 10.5px;
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    transition: background .15s ease;
+  }
+  button.danger:hover { background: var(--red-tint); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+
+  .empty {
+    color: var(--muted); font-size: 12.5px; padding: 36px 0; text-align: center;
+    border: 1px dashed var(--card-border); border-radius: var(--radius-md); background: transparent;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+
+  .note { font-size: 12px; color: var(--muted); margin-top: 13px; line-height: 1.7; }
+
+  .map-embed {
+    width: 100%; height: 280px; border: 1px solid var(--card-border); border-radius: var(--radius-md);
+    margin-bottom: 16px; filter: grayscale(.25) contrast(1.1) brightness(.9);
+  }
+
+  .progress-bar {
+    width: 100%; height: 3px; border-radius: 0; background: var(--card-border);
+    overflow: hidden; margin: 10px 0 4px;
+  }
+  .progress-bar .fill {
+    height: 100%; border-radius: 0;
+    background: var(--accent);
+    transition: width .5s ease;
+  }
+
+  .fin-top { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; margin-bottom: 6px; border: 1px solid var(--card-border); }
+  .ring-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; flex-shrink: 0; padding: 20px 28px; border-right: 1px solid var(--card-border); }
+  .ring-wrap .ring-label { font-size: 10px; color: var(--muted); font-weight: 700; text-align: center; max-width: 120px; text-transform: uppercase; letter-spacing: .05em; }
+  .ring-pct { font-size: 18px; font-weight: 800; fill: var(--text); }
+  .fin-top .grid-kpi { border: none; flex: 1; }
+
+  details.edit-box { margin-top: 16px; }
+  details.edit-box summary {
+    cursor: pointer; color: var(--muted); font-size: 11px; padding: 8px 0; font-weight: 700;
+    list-style: none; display: flex; align-items: center; gap: 7px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  details.edit-box summary:hover { color: var(--text); }
+  details.edit-box summary::before { content: "+"; font-size: 13px; transition: transform .15s ease; color: var(--accent); }
+  details.edit-box[open] summary::before { transform: rotate(45deg); }
+  details.edit-box summary::-webkit-details-marker { display: none; }
+
+  .formula-note {
+    background: var(--bg-elevated); border: 1px solid var(--card-border); border-radius: var(--radius-md);
+    padding: 15px 18px; font-size: 12px; color: var(--muted); margin-top: 15px; line-height: 1.8;
+  }
+  .formula-note b { color: var(--text); }
+
+  .warn-note {
+    background: var(--accent-tint); border: 1px solid var(--accent-dim); border-radius: var(--radius-md);
+    padding: 15px 18px; font-size: 12px; color: #ffb3ae; margin-top: 15px; line-height: 1.8;
+  }
+  .warn-note b { color: #fff; }
+  .warn-note a { color: #fff; }
+
+  .serif { font-family: "Fraunces", "Inter", serif; font-weight: 600; }
+
+  .value-split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--card-border);
+    border: 1px solid var(--card-border); margin-bottom: 22px;
+  }
+  .value-split .half { background: var(--card); padding: 26px 28px; }
+  .value-split .half.belw { background: #120e0e; }
+  .value-split .eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+  .value-split .big { font-size: 36px; letter-spacing: -.01em; line-height: 1.05; }
+  .value-split .half.markt .big { color: var(--gold, #c9a24a); }
+  .value-split .half.belw .big { color: var(--accent-strong); }
+  .value-split .per-m2 { font-size: 11.5px; color: var(--muted-dim); margin-top: 8px; text-transform: uppercase; letter-spacing: .04em; }
+
+  tr.subtotal td { font-weight: 700; color: var(--text); border-top: 1px solid var(--card-border); }
+
+  @media (max-width: 880px) {
+    .value-split { grid-template-columns: 1fr; }
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: 16px 18px; overflow-x: auto; }
+    .brand { padding: 0 16px 0 0; }
+    nav.tabs { flex-direction: row; margin-top: 0; }
+    .sidebar-foot { display: none; }
+    .main { padding: 28px 22px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <text x="0" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#c9a24a" letter-spacing="-0.5">D</text>
+          <line x1="10.6" y1="4" x2="10.6" y2="18" stroke="#c9a24a" stroke-width=".6" opacity=".55"/>
+          <text x="11.5" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#c9a24a" letter-spacing="-0.5">O</text>
+        </svg>
+      </div>
+      <div class="name">D&amp;O Brothers<small>Immobilien · Fahrzeuge</small></div>
+    </div>
+    <div class="brand-divider"></div>
+
+    <nav class="tabs">
+      <button data-view="dashboard" class="active"><span class="ico">📊</span>Übersicht</button>
+      <button data-view="objekte"><span class="ico">🏗️</span>Objekte</button>
+      <button data-view="finanzierung"><span class="ico">🏦</span>Finanzierung &amp; Vermögen</button>
+      <button data-view="rechner"><span class="ico">🧮</span>Darlehensrechner</button>
+      <button data-view="wertermittlung"><span class="ico">⚖️</span>Wertermittlung</button>
+      <button data-view="miete"><span class="ico">💶</span>Buchungen</button>
+      <button data-view="autohandel"><span class="ico">🚗</span>Autohandel</button>
+      <button data-view="fahrzeugbewertung"><span class="ico">💰</span>Fahrzeugbewertung</button>
+      <button data-view="daten"><span class="ico">⚙️</span>Daten</button>
+    </nav>
+
+    <div class="sidebar-foot">Lokale App · keine Cloud<br>Daten bleiben auf diesem Gerät</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <h1>D&amp;O Brothers</h1>
+      <div class="sub">Immobilien, Fahrzeuge, Finanzierung und Vermögensaufbau — alles an einem Ort.</div>
+    </div>
+
+    <div class="view active" id="view-dashboard"></div>
+    <div class="view" id="view-objekte"></div>
+    <div class="view" id="view-finanzierung"></div>
+    <div class="view" id="view-rechner"></div>
+    <div class="view" id="view-wertermittlung"></div>
+    <div class="view" id="view-miete"></div>
+    <div class="view" id="view-autohandel"></div>
+    <div class="view" id="view-fahrzeugbewertung"></div>
+    <div class="view" id="view-daten"></div>
+  </main>
+</div>
+
+<script>
+const STORAGE_KEY = "immobilien_app_data_v2";
+
+const KOSTEN_KATEGORIEN = [
+  "Grundsteuer",
+  "Müll/Wasser/Abwasser",
+  "Versicherung (Gebäude/Haftpflicht)",
+  "Hausverwaltung",
+  "Instandhaltung/Reparatur",
+  "Modernisierung/Sanierung",
+  "Notar/Grundbuch (Kaufnebenkosten)",
+  "Maklerprovision (Kaufnebenkosten)",
+  "Grunderwerbsteuer (Kaufnebenkosten)",
+  "Kreditzinsen",
+  "Kredittilgung",
+  "Mieter-Entschädigung",
+  "Sonstiges"
+];
+
+const NICHT_UMLAGEFAEHIG_DEFAULT = new Set([
+  "Hausverwaltung", "Instandhaltung/Reparatur", "Modernisierung/Sanierung",
+  "Notar/Grundbuch (Kaufnebenkosten)", "Maklerprovision (Kaufnebenkosten)",
+  "Grunderwerbsteuer (Kaufnebenkosten)", "Kreditzinsen", "Kredittilgung",
+  "Mieter-Entschädigung"
+]);
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function defaultData() {
+  // Öffentliche Demo-Version (GitHub Pages) — bewusst NUR erfundene
+  // Beispielwerte, keine echten Objekt-/Finanz-/Personendaten. Die echte
+  // Version mit echten Zahlen läuft ausschließlich lokal bzw. über den
+  // passwortgeschützten Tunnel, nie hier.
+  const objektId = "beispielobjekt";
+  return {
+    objekte: [
+      {
+        id: objektId,
+        adresse: "Musterstraße 1, 12345 Musterstadt",
+        typ: "Zweifamilienhaus",
+        baujahr: 1960,
+        wohnflaeche: 150,
+        grundstueck: 600,
+        energieeffizienzklasse: "E",
+        kaufpreis: 200000,
+        kaufdatum: "2026-01-15",
+        bildUrl: "",
+        kartenAdresse: "",
+        darlehenssumme: 200000,
+        zinssatz: 4.0,
+        tilgungssatz: 2.0,
+        kreditstart: "2026-02-01",
+        bodenrichtwert: 100,
+        liegenschaftszins: 3.5,
+        restnutzungsdauer: 30,
+        nachhaltigeMieteProzent: 90,
+        belwertBewirtschaftungProzent: 23,
+        belwertZinsZuschlag: 0.5,
+        belwertSicherheitsabschlagProzent: 15,
+        einheiten: [
+          { id: "eg", name: "EG", flaeche: 75, zimmer: 4, kaltmiete: 800.00, status: "vermietet" },
+          { id: "dg", name: "DG", flaeche: 75, zimmer: 3, kaltmiete: 700.00, status: "vermietet" }
+        ]
+      }
+    ],
+    mieteinnahmen: [],
+    kosten: [
+      { id: uid(), objektId, datum: "2026-02-01", kategorie: "Grunderwerbsteuer (Kaufnebenkosten)", betrag: 13000.00, umlagefaehig: false, beschreibung: "Beispiel-Eintrag" },
+      { id: uid(), objektId, datum: "2026-02-10", kategorie: "Maklerprovision (Kaufnebenkosten)", betrag: 7000.00, umlagefaehig: false, beschreibung: "Beispiel-Eintrag" },
+      { id: uid(), objektId, datum: "2026-02-15", kategorie: "Müll/Wasser/Abwasser", betrag: 1000.00, umlagefaehig: true, beschreibung: "Beispiel-Eintrag" }
+    ],
+    fahrzeuge: [
+      { id: uid(), marke: "Beispielmarke", modell: "Beispielmodell", baujahr: 2010, farbe: "Grau", km: 150000, status: "Bestand", kaufpreis: 1000, investitionGeplant: 300, investitionIst: 0, zielpreis: 1800, verkaufspreis: null, tuevBis: "", partner: "", bildUrl: "", notizen: "Beispiel-Eintrag zum Ausprobieren" }
+    ]
+  };
+}
+
+let DATA = loadData();
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Fehlende neue Felder bei älteren Objekten nachrüsten
+      parsed.objekte.forEach(o => {
+        if (o.bildUrl === undefined) o.bildUrl = "";
+        if (o.kartenAdresse === undefined) o.kartenAdresse = "";
+        if (o.darlehenssumme === undefined) o.darlehenssumme = null;
+        if (o.zinssatz === undefined) o.zinssatz = null;
+        if (o.tilgungssatz === undefined) o.tilgungssatz = null;
+        if (o.kreditstart === undefined) o.kreditstart = null;
+        if (o.bodenrichtwert === undefined) o.bodenrichtwert = 0;
+        if (o.liegenschaftszins === undefined) o.liegenschaftszins = 3.5;
+        if (o.restnutzungsdauer === undefined) o.restnutzungsdauer = 25;
+        if (o.nachhaltigeMieteProzent === undefined) o.nachhaltigeMieteProzent = 90;
+        if (o.belwertBewirtschaftungProzent === undefined) o.belwertBewirtschaftungProzent = 23;
+        if (o.belwertZinsZuschlag === undefined) o.belwertZinsZuschlag = 0.5;
+        if (o.belwertSicherheitsabschlagProzent === undefined) o.belwertSicherheitsabschlagProzent = 15;
+      });
+      if (parsed.fahrzeuge === undefined) parsed.fahrzeuge = [];
+      return parsed;
+    }
+  } catch (e) { console.warn("localStorage nicht lesbar:", e); }
+  return defaultData();
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  } catch (e) {
+    alert("Konnte nicht lokal gespeichert werden (localStorage voll oder nicht verfügbar). Bitte über 'Daten' > Export sichern. Große Fotos als Datei-Upload können den Speicher schnell füllen — im Zweifel Bild-URL statt Upload nutzen.");
+  }
+}
+
+function fmtEUR(n) {
+  return (n == null ? 0 : n).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+}
+function fmtDate(d) {
+  if (!d) return "–";
+  const [y, m, day] = d.split("-");
+  return `${day}.${m}.${y}`;
+}
+function fmtPct(n) {
+  return (n == null ? 0 : n).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+}
+
+function getObjekt(id) { return DATA.objekte.find(o => o.id === id); }
+function getEinheit(objektId, einheitId) {
+  const o = getObjekt(objektId);
+  return o ? o.einheiten.find(e => e.id === einheitId) : null;
+}
+function objektBildSrc(o) {
+  return o.bildDataUrl || o.bildUrl || null;
+}
+
+// Großes Foto-Banner im Immobilienportal-Stil (Adresse + Meta als Overlay-Text)
+function listingHero(o, metaText) {
+  const bild = objektBildSrc(o);
+  if (bild) {
+    return `<div class="listing-hero">
+      <img src="${bild}">
+      <div class="overlay"></div>
+      <div class="overlay-text">
+        <div class="addr">${o.adresse}</div>
+        ${metaText ? `<div class="meta">${metaText}</div>` : ""}
+      </div>
+      <div class="view-btn">→</div>
+    </div>`;
+  }
+  return `<div class="listing-hero placeholder">🏠</div>
+    <h2 style="margin-top:0; text-transform:uppercase; font-size:18px; letter-spacing:.02em">${o.adresse}</h2>`;
+}
+
+// ============================================================
+// FINANZIERUNG / TILGUNGSPLAN
+// ============================================================
+function hatFinanzierung(o) {
+  return o.darlehenssumme && o.zinssatz != null && o.tilgungssatz != null && o.kreditstart;
+}
+
+function monatlicheRate(o) {
+  if (!hatFinanzierung(o)) return 0;
+  return o.darlehenssumme * (o.zinssatz + o.tilgungssatz) / 100 / 12;
+}
+
+// Monatliche Amortisationstabelle vom Kreditstart bis zu einem Zieldatum (inkl.)
+function amortisationMonatlich(o, bisDatum) {
+  if (!hatFinanzierung(o)) return [];
+  const rate = monatlicheRate(o);
+  let restschuld = o.darlehenssumme;
+  const start = new Date(o.kreditstart + "T00:00:00");
+  const end = new Date(bisDatum + "T00:00:00");
+  const rows = [];
+  let cursor = new Date(start);
+  while (cursor <= end && restschuld > 0.01) {
+    const zinsanteil = restschuld * (o.zinssatz / 100) / 12;
+    let tilgungsanteil = rate - zinsanteil;
+    if (tilgungsanteil > restschuld) tilgungsanteil = restschuld;
+    restschuld = Math.max(0, restschuld - tilgungsanteil);
+    rows.push({
+      jahr: cursor.getFullYear(),
+      monat: cursor.getMonth() + 1,
+      zinsanteil, tilgungsanteil, restschuld
+    });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return rows;
+}
+
+function heuteISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function finanzKennzahlen(o) {
+  if (!hatFinanzierung(o)) return null;
+  const rows = amortisationMonatlich(o, heuteISO());
+  const restschuldAktuell = rows.length ? rows[rows.length - 1].restschuld : o.darlehenssumme;
+  const getilgtGesamt = o.darlehenssumme - restschuldAktuell;
+  const letzte = rows[rows.length - 1] || { zinsanteil: 0, tilgungsanteil: 0 };
+  return {
+    rate: monatlicheRate(o),
+    restschuldAktuell,
+    getilgtGesamt,
+    fortschrittProzent: o.darlehenssumme ? (getilgtGesamt / o.darlehenssumme) * 100 : 0,
+    aktuellerZinsanteil: letzte.zinsanteil,
+    aktuellerTilgungsanteil: letzte.tilgungsanteil,
+    monateGezahlt: rows.length
+  };
+}
+
+function amortisationJaehrlich(o) {
+  const rows = amortisationMonatlich(o, heuteISO());
+  const byYear = {};
+  rows.forEach(r => {
+    if (!byYear[r.jahr]) byYear[r.jahr] = { jahr: r.jahr, zinsen: 0, tilgung: 0, restschuldEnde: r.restschuld };
+    byYear[r.jahr].zinsen += r.zinsanteil;
+    byYear[r.jahr].tilgung += r.tilgungsanteil;
+    byYear[r.jahr].restschuldEnde = r.restschuld;
+  });
+  return Object.values(byYear).sort((a, b) => a.jahr - b.jahr);
+}
+
+// ============================================================
+// DARLEHENSRECHNER (Tab) — freies Planungstool, unabhängig von Objekten,
+// nichts wird gespeichert (bewusst ein Scratch-Tool).
+// ============================================================
+let rechnerInitialized = false;
+let rechnerModus = "satz"; // "satz" = Tilgungssatz eingeben, "rate" = feste Monatsrate eingeben
+let rechnerSondertilgungen = []; // { id, datum, betrag } — nur im Speicher, kein DATA/localStorage
+
+// Reine Rechenfunktion, unabhängig vom DOM — testbar ohne Browser.
+function rechnerBerechnen(input) {
+  const errors = [];
+  const darlehenssumme = Number(input.darlehenssumme) || 0;
+  const zinssatz = input.zinssatz != null ? Number(input.zinssatz) : null;
+
+  if (!darlehenssumme || darlehenssumme <= 0) errors.push("Darlehenssumme fehlt oder ist 0.");
+  if (zinssatz == null || zinssatz < 0) errors.push("Zinssatz fehlt.");
+  if (!input.kreditstart) errors.push("Kreditstart fehlt.");
+  if (errors.length) return { errors, warnings: [] };
+
+  let rate, tilgungssatzAnfang;
+  if (input.modus === "rate") {
+    const monatsrate = Number(input.monatsrate) || 0;
+    if (monatsrate <= 0) return { errors: ["Monatliche Rate fehlt."], warnings: [] };
+    rate = monatsrate;
+    tilgungssatzAnfang = (rate * 12 / darlehenssumme) * 100 - zinssatz;
+  } else if (input.modus === "laufzeit") {
+    const laufzeitJahre = Number(input.laufzeitJahre) || 0;
+    const nMonate = Math.round(laufzeitJahre * 12);
+    if (nMonate <= 0) return { errors: ["Gewünschte Laufzeit fehlt."], warnings: [] };
+    const iMonat = zinssatz / 100 / 12;
+    // Annuitätenformel: welche konstante Monatsrate tilgt die Darlehenssumme in genau n Monaten voll ab?
+    rate = iMonat > 0
+      ? darlehenssumme * iMonat / (1 - Math.pow(1 + iMonat, -nMonate))
+      : darlehenssumme / nMonate; // Sonderfall 0 % Zins: lineare Tilgung
+    tilgungssatzAnfang = (rate * 12 / darlehenssumme) * 100 - zinssatz;
+  } else {
+    const tilgungssatz = Number(input.tilgungssatz) || 0;
+    if (tilgungssatz <= 0) return { errors: ["Tilgungssatz fehlt."], warnings: [] };
+    tilgungssatzAnfang = tilgungssatz;
+    rate = darlehenssumme * (zinssatz + tilgungssatz) / 100 / 12;
+  }
+
+  const zinsanteilStart = darlehenssumme * (zinssatz / 100) / 12;
+  if (rate <= zinsanteilStart) {
+    return { errors: [`Die Monatsrate (${fmtEUR(rate)}) deckt nicht einmal die Zinsen (${fmtEUR(zinsanteilStart)}) — die Restschuld würde nie sinken. Tilgungssatz bzw. Rate erhöhen.`], warnings: [] };
+  }
+
+  // Einmalige Sondertilgungen nach Monats-Key ("YYYY-M") vorsortieren
+  const einmaligeByKey = {};
+  (input.sondertilgungenEinmalig || []).forEach(s => {
+    if (!s.datum || !s.betrag) return;
+    const d = new Date(s.datum + "T00:00:00");
+    const key = d.getFullYear() + "-" + (d.getMonth() + 1);
+    einmaligeByKey[key] = (einmaligeByKey[key] || 0) + Number(s.betrag);
+  });
+
+  const sondertilgungJaehrlich = Number(input.sondertilgungJaehrlich) || 0;
+  const grenzeProzent = input.sondertilgungsGrenzeProzent != null ? Number(input.sondertilgungsGrenzeProzent) : null;
+  const grenzeBetrag = grenzeProzent != null ? darlehenssumme * (grenzeProzent / 100) : null;
+
+  const zinsbindungMonate = input.zinsbindungJahre ? Math.round(Number(input.zinsbindungJahre) * 12) : null;
+  const maxMonths = 50 * 12; // Sicherheitsgrenze gegen Endlosschleifen bei unsinnigen Eingaben
+
+  let restschuld = darlehenssumme;
+  const rows = [];
+  let cursor = new Date(input.kreditstart + "T00:00:00");
+  let monat = 0;
+  let gesamtzinsen = 0;
+  let gesamtsondertilgung = 0;
+  let jahresSonder = 0;
+  let jahresBegin = cursor.getFullYear();
+  const warnings = [];
+  let hitMaxMonths = false;
+  let gestopptDurchZinsbindung = false;
+
+  while (restschuld > 0.01) {
+    if (zinsbindungMonate != null && monat >= zinsbindungMonate) { gestopptDurchZinsbindung = true; break; }
+    if (monat >= maxMonths) { hitMaxMonths = true; break; }
+
+    const jahr = cursor.getFullYear();
+    if (jahr !== jahresBegin) {
+      if (grenzeBetrag != null && jahresSonder > grenzeBetrag + 0.01) {
+        warnings.push(`Sondertilgung ${jahresBegin}: ${fmtEUR(jahresSonder)} überschreitet die Grenze von ${fmtEUR(grenzeBetrag)} (${grenzeProzent}% / Jahr).`);
+      }
+      jahresBegin = jahr;
+      jahresSonder = 0;
+    }
+
+    const zinsanteil = restschuld * (zinssatz / 100) / 12;
+    let tilgungsanteil = rate - zinsanteil;
+    if (tilgungsanteil > restschuld) tilgungsanteil = restschuld;
+    restschuld -= tilgungsanteil;
+    gesamtzinsen += zinsanteil;
+
+    let sonder = 0;
+    const key = jahr + "-" + (cursor.getMonth() + 1);
+    if (einmaligeByKey[key]) sonder += einmaligeByKey[key];
+    if (sondertilgungJaehrlich && cursor.getMonth() === 11) sonder += sondertilgungJaehrlich;
+    if (sonder > restschuld) sonder = restschuld;
+    restschuld = Math.max(0, restschuld - sonder);
+    gesamtsondertilgung += sonder;
+    jahresSonder += sonder;
+
+    rows.push({ jahr, monat: cursor.getMonth() + 1, zinsanteil, tilgungsanteil, sonder, restschuld });
+    if (restschuld <= 0.01) restschuld = 0;
+
+    cursor.setMonth(cursor.getMonth() + 1);
+    monat++;
+  }
+  // Grenzprüfung fürs letzte (ggf. unvollständige) Jahr nachholen
+  if (grenzeBetrag != null && jahresSonder > grenzeBetrag + 0.01) {
+    warnings.push(`Sondertilgung ${jahresBegin}: ${fmtEUR(jahresSonder)} überschreitet die Grenze von ${fmtEUR(grenzeBetrag)} (${grenzeProzent}% / Jahr).`);
+  }
+  if (hitMaxMonths) {
+    warnings.push("Nach 50 Jahren ist die Restschuld immer noch nicht auf 0 — Eingaben prüfen (Rate evtl. zu niedrig).");
+  }
+
+  const restschuldEnde = rows.length ? rows[rows.length - 1].restschuld : darlehenssumme;
+  const vollstaendigGetilgt = restschuldEnde <= 0.01;
+
+  const byYear = {};
+  rows.forEach(r => {
+    if (!byYear[r.jahr]) byYear[r.jahr] = { jahr: r.jahr, zinsen: 0, tilgung: 0, sonder: 0, restschuldEnde: r.restschuld };
+    byYear[r.jahr].zinsen += r.zinsanteil;
+    byYear[r.jahr].tilgung += r.tilgungsanteil;
+    byYear[r.jahr].sonder += r.sonder;
+    byYear[r.jahr].restschuldEnde = r.restschuld;
+  });
+
+  return {
+    errors: [],
+    warnings,
+    rate,
+    tilgungssatzAnfang,
+    zinsanteilStart: rows[0] ? rows[0].zinsanteil : zinsanteilStart,
+    tilgungsanteilStart: rows[0] ? rows[0].tilgungsanteil : (rate - zinsanteilStart),
+    monateGerechnet: rows.length,
+    restschuldEnde,
+    vollstaendigGetilgt,
+    gestopptDurchZinsbindung,
+    gesamtzinsen,
+    gesamtsondertilgung,
+    fortschrittProzent: darlehenssumme ? ((darlehenssumme - restschuldEnde) / darlehenssumme) * 100 : 0,
+    jahresRows: Object.values(byYear).sort((a, b) => a.jahr - b.jahr)
+  };
+}
+
+function rechnerAktuelleEingaben() {
+  return {
+    darlehenssumme: Number(document.getElementById("r-darlehenssumme").value) || 0,
+    zinssatz: document.getElementById("r-zinssatz").value !== "" ? Number(document.getElementById("r-zinssatz").value) : null,
+    kreditstart: document.getElementById("r-kreditstart").value,
+    zinsbindungJahre: document.getElementById("r-zinsbindung").value ? Number(document.getElementById("r-zinsbindung").value) : null,
+    modus: rechnerModus,
+    tilgungssatz: Number(document.getElementById("r-tilgungssatz").value) || 0,
+    monatsrate: Number(document.getElementById("r-rate").value) || 0,
+    laufzeitJahre: Number(document.getElementById("r-laufzeit-wunsch").value) || 0,
+    sondertilgungJaehrlich: Number(document.getElementById("r-sonder-jaehrlich").value) || 0,
+    sondertilgungsGrenzeProzent: document.getElementById("r-sonder-grenze").value ? Number(document.getElementById("r-sonder-grenze").value) : null,
+    sondertilgungenEinmalig: rechnerSondertilgungen
+  };
+}
+
+function monateAlsJahreText(monate) {
+  const jahre = Math.floor(monate / 12);
+  const rest = monate % 12;
+  if (jahre === 0) return `${rest} Monate`;
+  if (rest === 0) return `${jahre} Jahre`;
+  return `${jahre} Jahre, ${rest} Monate`;
+}
+
+function updateRechnerErgebnis() {
+  const el = document.getElementById("rechner-ergebnis");
+  if (!el) return;
+  const input = rechnerAktuelleEingaben();
+  const r = rechnerBerechnen(input);
+
+  if (r.errors.length) {
+    el.innerHTML = `<div class="card"><div class="empty">${r.errors.join("<br>")}</div></div>`;
+    return;
+  }
+
+  const heroLabel = r.gestopptDurchZinsbindung ? `Restschuld nach ${input.zinsbindungJahre} Jahren Zinsbindung` : "Restschuld bei Volltilgung";
+  const heroValue = r.gestopptDurchZinsbindung ? r.restschuldEnde : 0;
+  const ringLabel = r.gestopptDurchZinsbindung ? "Nach Zinsbindung<br>getilgt" : "Bis Volltilgung<br>getilgt";
+
+  const warnHtml = r.warnings.length
+    ? `<div class="warn-note"><b>Hinweis:</b><br>${r.warnings.join("<br>")}</div>`
+    : "";
+
+  const anschlussHtml = r.gestopptDurchZinsbindung
+    ? `<div class="formula-note">Für eine Anschlussfinanzierung die Restschuld <b>${fmtEUR(r.restschuldEnde)}</b> einfach oben als neue Darlehenssumme eintragen und mit dem dann erwarteten Zins neu rechnen.</div>`
+    : "";
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="fin-top">
+        ${renderRing(r.fortschrittProzent, ringLabel)}
+        <div style="flex:1; min-width:260px">
+          <div class="grid-kpi" style="margin-bottom:0">
+            <div class="kpi hero"><div class="label">${heroLabel}</div><div class="value">${fmtEUR(heroValue)}</div></div>
+            <div class="kpi"><div class="label">Monatliche Rate</div><div class="value">${fmtEUR(r.rate)}</div></div>
+            <div class="kpi"><div class="label">Zinsanteil zu Beginn</div><div class="value">${fmtEUR(r.zinsanteilStart)}</div></div>
+            <div class="kpi"><div class="label">Tilgungsanteil zu Beginn</div><div class="value">${fmtEUR(r.tilgungsanteilStart)}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-kpi">
+        ${input.modus !== "satz" ? `<div class="kpi"><div class="label">Effektiver Tilgungssatz zu Beginn</div><div class="value">${r.tilgungssatzAnfang.toFixed(2)} %</div></div>` : ""}
+        <div class="kpi"><div class="label">${r.gestopptDurchZinsbindung ? "Dauer der Zinsbindung" : "Gesamtlaufzeit bis Volltilgung"}</div><div class="value">${monateAlsJahreText(r.monateGerechnet)}</div></div>
+        <div class="kpi"><div class="label">Gesamtzinskosten (berechneter Zeitraum)</div><div class="value red">${fmtEUR(r.gesamtzinsen)}</div></div>
+        <div class="kpi"><div class="label">Sondertilgungen gesamt</div><div class="value green">${fmtEUR(r.gesamtsondertilgung)}</div></div>
+      </div>
+      ${warnHtml}
+      ${anschlussHtml}
+      <h3 style="margin-top:16px">Tilgungsplan nach Jahren</h3>
+      <table>
+        <tr><th>Jahr</th><th class="num">Zinsen</th><th class="num">Reguläre Tilgung</th><th class="num">Sondertilgung</th><th class="num">Restschuld Jahresende</th></tr>
+        ${r.jahresRows.map(y => `<tr><td>${y.jahr}</td><td class="num">${fmtEUR(y.zinsen)}</td><td class="num">${fmtEUR(y.tilgung)}</td><td class="num">${fmtEUR(y.sonder)}</td><td class="num">${fmtEUR(y.restschuldEnde)}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">Keine Berechnung möglich.</td></tr>`}
+      </table>
+    </div>`;
+}
+
+function setRechnerModus(modus) {
+  rechnerModus = modus;
+  document.querySelectorAll("#rechner-modus-toggle .toggle-btn").forEach(b => b.classList.toggle("active", b.dataset.modus === modus));
+  document.getElementById("r-feld-tilgungssatz").style.display = modus === "satz" ? "flex" : "none";
+  document.getElementById("r-feld-rate").style.display = modus === "rate" ? "flex" : "none";
+  document.getElementById("r-feld-laufzeit").style.display = modus === "laufzeit" ? "flex" : "none";
+  updateRechnerErgebnis();
+}
+
+function addSondertilgung(ev) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const datum = f.get("datum");
+  const betrag = Number(f.get("betrag"));
+  if (!datum || !betrag) return;
+  rechnerSondertilgungen.push({ id: uid(), datum, betrag });
+  ev.target.reset();
+  renderSondertilgungenListe();
+  updateRechnerErgebnis();
+}
+
+function removeSondertilgung(id) {
+  rechnerSondertilgungen = rechnerSondertilgungen.filter(s => s.id !== id);
+  renderSondertilgungenListe();
+  updateRechnerErgebnis();
+}
+
+function renderSondertilgungenListe() {
+  const el = document.getElementById("rechner-sondertilgungen-liste");
+  if (!el) return;
+  if (rechnerSondertilgungen.length === 0) { el.innerHTML = ""; return; }
+  const sorted = [...rechnerSondertilgungen].sort((a, b) => (a.datum || "").localeCompare(b.datum || ""));
+  el.innerHTML = `<tr><th>Datum</th><th class="num">Betrag</th><th></th></tr>` +
+    sorted.map(s => `<tr><td>${fmtDate(s.datum)}</td><td class="num">${fmtEUR(s.betrag)}</td><td><button class="danger" type="button" onclick="removeSondertilgung('${s.id}')">löschen</button></td></tr>`).join("");
+}
+
+// ============================================================
+// BALLONKREDITRECHNER (innerhalb des Darlehensrechner-Tabs) — für Autokredite
+// mit Drei-Wege-Finanzierung: niedrige Monatsraten + große Schlussrate am Ende.
+// ============================================================
+let ballonModus = "schlussrate"; // "schlussrate" = Schlussrate vorgeben, "rate" = Monatsrate vorgeben
+
+// Reine Rechenfunktion, unabhängig vom DOM — testbar ohne Browser.
+function ballonBerechnen(input) {
+  const errors = [];
+  const kaufpreis = Number(input.kaufpreis) || 0;
+  const anzahlung = Number(input.anzahlung) || 0;
+  const zinssatz = input.zinssatz != null ? Number(input.zinssatz) : null;
+  const n = Math.round(Number(input.laufzeitMonate) || 0);
+  const darlehensbetrag = kaufpreis - anzahlung;
+
+  if (!kaufpreis || kaufpreis <= 0) errors.push("Kaufpreis fehlt oder ist 0.");
+  if (anzahlung < 0) errors.push("Anzahlung darf nicht negativ sein.");
+  if (kaufpreis > 0 && darlehensbetrag <= 0) errors.push("Anzahlung ist größer oder gleich dem Kaufpreis — kein Darlehen nötig.");
+  if (zinssatz == null || zinssatz < 0) errors.push("Zinssatz fehlt.");
+  if (n <= 0) errors.push("Laufzeit fehlt.");
+  if (errors.length) return { errors, warnings: [] };
+
+  const i = zinssatz / 100 / 12;
+  const abzinsfaktorN = i > 0 ? Math.pow(1 + i, -n) : 1;
+  const annuitaetenfaktor = i > 0 ? (1 - abzinsfaktorN) / i : n;
+
+  let rate;
+  if (input.modus === "rate") {
+    rate = Number(input.monatsrate) || 0;
+    if (rate <= 0) return { errors: ["Monatliche Rate fehlt."], warnings: [] };
+  } else {
+    const schlussrateVorgabe = Number(input.schlussrate) || 0;
+    if (schlussrateVorgabe < 0) return { errors: ["Schlussrate fehlt."], warnings: [] };
+    rate = i > 0
+      ? (darlehensbetrag - schlussrateVorgabe * abzinsfaktorN) / annuitaetenfaktor
+      : (darlehensbetrag - schlussrateVorgabe) / n;
+    if (rate <= 0) {
+      return { errors: ["Die Schlussrate ist bei dieser Laufzeit/diesem Zins zu hoch — die resultierende Monatsrate wäre 0 oder negativ. Schlussrate senken oder Laufzeit verlängern."], warnings: [] };
+    }
+  }
+
+  // n volle Monatsraten tilgen die Restschuld wie bei einem normalen Annuitätendarlehen;
+  // was danach übrig bleibt, ist genau die Schlussrate — als separate Zahlung zusätzlich zur letzten Monatsrate fällig.
+  let restschuld = darlehensbetrag;
+  const rows = [];
+  let gesamtzinsen = 0;
+  const warnings = [];
+
+  for (let m = 1; m <= n; m++) {
+    const zinsanteil = restschuld * i;
+    const tilgungsanteil = rate - zinsanteil;
+    if (tilgungsanteil < 0) {
+      warnings.push(`Monat ${m}: Die Rate deckt die Zinsen nicht — die Restschuld steigt in diesem Monat statt zu sinken.`);
+    }
+    restschuld -= tilgungsanteil;
+    gesamtzinsen += zinsanteil;
+    rows.push({ monat: m, zahlung: rate, zinsanteil, tilgungsanteil, restschuld, istSchlussrate: false });
+  }
+
+  const schlussrateIst = Math.max(0, restschuld);
+  rows.push({ monat: n, zahlung: schlussrateIst, zinsanteil: 0, tilgungsanteil: schlussrateIst, restschuld: 0, istSchlussrate: true });
+
+  const gesamtkostenRaten = rate * n + schlussrateIst;
+
+  return {
+    errors: [],
+    warnings,
+    darlehensbetrag,
+    rate,
+    schlussrateIst,
+    gesamtzinsen,
+    gesamtkosten: gesamtkostenRaten + anzahlung,
+    rows
+  };
+}
+
+function ballonAktuelleEingaben() {
+  return {
+    kaufpreis: Number(document.getElementById("b-kaufpreis").value) || 0,
+    anzahlung: Number(document.getElementById("b-anzahlung").value) || 0,
+    zinssatz: document.getElementById("b-zinssatz").value !== "" ? Number(document.getElementById("b-zinssatz").value) : null,
+    laufzeitMonate: Number(document.getElementById("b-laufzeit").value) || 0,
+    modus: ballonModus,
+    schlussrate: Number(document.getElementById("b-schlussrate").value) || 0,
+    monatsrate: Number(document.getElementById("b-rate").value) || 0
+  };
+}
+
+function updateBallonErgebnis() {
+  const el = document.getElementById("ballon-ergebnis");
+  if (!el) return;
+  const input = ballonAktuelleEingaben();
+  const r = ballonBerechnen(input);
+
+  if (r.errors.length) {
+    el.innerHTML = `<div class="card"><div class="empty">${r.errors.join("<br>")}</div></div>`;
+    return;
+  }
+
+  const warnHtml = r.warnings.length
+    ? `<div class="warn-note"><b>Hinweis:</b><br>${r.warnings.join("<br>")}</div>`
+    : "";
+
+  // Das, was der Nutzer vorgibt, wird als normale Kachel gezeigt; das Berechnete als Hero-Kachel.
+  const rateKpi = `<div class="kpi${input.modus === "schlussrate" ? " hero" : ""}"><div class="label">Monatliche Rate</div><div class="value">${fmtEUR(r.rate)}</div></div>`;
+  const schlussrateKpi = `<div class="kpi${input.modus === "rate" ? " hero" : ""}"><div class="label">Schlussrate (letzter Monat)</div><div class="value">${fmtEUR(r.schlussrateIst)}</div></div>`;
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="grid-kpi">
+        ${rateKpi}
+        ${schlussrateKpi}
+        <div class="kpi"><div class="label">Darlehensbetrag (Kaufpreis − Anzahlung)</div><div class="value">${fmtEUR(r.darlehensbetrag)}</div></div>
+        <div class="kpi"><div class="label">Gesamtzinskosten über die Laufzeit</div><div class="value red">${fmtEUR(r.gesamtzinsen)}</div></div>
+        <div class="kpi"><div class="label">Gesamtkosten (Anzahlung + alle Raten + Schlussrate)</div><div class="value">${fmtEUR(r.gesamtkosten)}</div></div>
+      </div>
+      ${warnHtml}
+      <h3 style="margin-top:16px">Ratenplan</h3>
+      <table>
+        <tr><th>Monat</th><th class="num">Zahlung</th><th class="num">davon Zinsen</th><th class="num">davon Tilgung</th><th class="num">Restschuld</th></tr>
+        ${r.rows.map(row => `<tr><td>${row.istSchlussrate ? `nach Monat ${row.monat} — Schlussrate` : "Monat " + row.monat}</td><td class="num">${fmtEUR(row.zahlung)}</td><td class="num">${fmtEUR(row.zinsanteil)}</td><td class="num">${fmtEUR(row.tilgungsanteil)}</td><td class="num">${fmtEUR(row.restschuld)}</td></tr>`).join("")}
+      </table>
+    </div>`;
+}
+
+function setBallonModus(modus) {
+  ballonModus = modus;
+  document.querySelectorAll("#ballon-modus-toggle .toggle-btn").forEach(b => b.classList.toggle("active", b.dataset.modus === modus));
+  document.getElementById("b-feld-schlussrate").style.display = modus === "schlussrate" ? "flex" : "none";
+  document.getElementById("b-feld-rate").style.display = modus === "rate" ? "flex" : "none";
+  updateBallonErgebnis();
+}
+
+// Der Rechner-Tab wird nur EINMAL aufgebaut (nicht bei jedem renderAll()),
+// damit Eingaben beim Wechsel in andere Tabs nicht verloren gehen.
+function renderRechner() {
+  if (rechnerInitialized) return;
+  rechnerInitialized = true;
+  const el = document.getElementById("view-rechner");
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>🧮 Darlehensrechner</h2>
+      <div class="note">Freies Planungstool für Immobilienfinanzierungen — unabhängig von deinen gespeicherten Objekten, nichts wird dauerhaft gespeichert (Eingaben gehen beim Neuladen der Seite verloren).</div>
+
+      <h3 style="margin-top:22px">Darlehen</h3>
+      <form class="inline" onsubmit="event.preventDefault()">
+        <div class="field"><label>Darlehenssumme (€)</label><input id="r-darlehenssumme" type="number" step="100" min="0" value="300000" oninput="updateRechnerErgebnis()"></div>
+        <div class="field"><label>Zinssatz p.a. (%)</label><input id="r-zinssatz" type="number" step="0.01" min="0" value="3.5" oninput="updateRechnerErgebnis()"></div>
+        <div class="field"><label>Kreditstart</label><input id="r-kreditstart" type="date" value="${heuteISO()}" oninput="updateRechnerErgebnis()"></div>
+        <div class="field"><label>Zinsbindung in Jahren (optional)</label><input id="r-zinsbindung" type="number" step="1" min="0" placeholder="leer = bis Volltilgung" oninput="updateRechnerErgebnis()"></div>
+      </form>
+
+      <h3 style="margin-top:22px">Tilgung</h3>
+      <div class="toggle-group" id="rechner-modus-toggle">
+        <button type="button" class="toggle-btn active" data-modus="satz" onclick="setRechnerModus('satz')">Tilgungssatz (%)</button>
+        <button type="button" class="toggle-btn" data-modus="rate" onclick="setRechnerModus('rate')">Monatliche Rate (€)</button>
+        <button type="button" class="toggle-btn" data-modus="laufzeit" onclick="setRechnerModus('laufzeit')">Eigene Laufzeit (Jahre)</button>
+      </div>
+      <form class="inline" onsubmit="event.preventDefault()" style="margin-top:10px">
+        <div class="field" id="r-feld-tilgungssatz"><label>Tilgungssatz p.a. (%)</label><input id="r-tilgungssatz" type="number" step="0.01" min="0" value="2" oninput="updateRechnerErgebnis()"></div>
+        <div class="field" id="r-feld-rate" style="display:none"><label>Monatliche Rate (€)</label><input id="r-rate" type="number" step="10" min="0" oninput="updateRechnerErgebnis()"></div>
+        <div class="field" id="r-feld-laufzeit" style="display:none"><label>Gewünschte Laufzeit (Jahre)</label><input id="r-laufzeit-wunsch" type="number" step="1" min="1" placeholder="z.B. 8" oninput="updateRechnerErgebnis()"></div>
+      </form>
+      <div class="note">Bei "Eigene Laufzeit" berechnet der Rechner die nötige Monatsrate (und den daraus resultierenden Tilgungssatz) selbst — praktisch für kleinere Beträge, bei denen ein Tilgungssatz in % unhandlich ist und du stattdessen direkt sagen willst "in X Jahren abbezahlt".</div>
+
+      <h3 style="margin-top:22px">Sondertilgungen (optional)</h3>
+      <form class="inline" onsubmit="event.preventDefault()">
+        <div class="field"><label>Jährlich wiederkehrend (€)</label><input id="r-sonder-jaehrlich" type="number" step="100" min="0" value="0" oninput="updateRechnerErgebnis()"></div>
+        <div class="field"><label>Erlaubte Grenze (% der Darlehenssumme/Jahr)</label><input id="r-sonder-grenze" type="number" step="0.5" min="0" placeholder="z.B. 5" oninput="updateRechnerErgebnis()"></div>
+      </form>
+      <form class="inline" onsubmit="addSondertilgung(event)" style="margin-top:14px">
+        <div class="field"><label>Einmalige Sondertilgung — Datum</label><input name="datum" type="date" required></div>
+        <div class="field"><label>Betrag (€)</label><input name="betrag" type="number" step="100" min="0" required></div>
+        <button class="ghost" type="submit">+ Hinzufügen</button>
+      </form>
+      <table style="margin-top:10px" id="rechner-sondertilgungen-liste"></table>
+      <div class="note">Die jährlich wiederkehrende Sondertilgung wird jeweils im Dezember angesetzt. Die Grenze bezieht sich auf die ursprüngliche Darlehenssumme pro Kalenderjahr — eine Annäherung an die bankübliche 5–10%-Regel, kein Ersatz für den tatsächlichen Darlehensvertrag.</div>
+    </div>
+
+    <div id="rechner-ergebnis"></div>
+
+    <div class="card">
+      <h2>🎈 Ballonkreditrechner (Autokredit)</h2>
+      <div class="note">Für Drei-Wege-Finanzierungen bei Fahrzeugen: niedrige Monatsraten über die Laufzeit, am Ende eine große Schlussrate (Restwert). Ebenfalls frei, unabhängig vom Fuhrpark unter "🚗 Autohandel", nichts wird gespeichert.</div>
+
+      <h3 style="margin-top:22px">Fahrzeug &amp; Darlehen</h3>
+      <form class="inline" onsubmit="event.preventDefault()">
+        <div class="field"><label>Kaufpreis Fahrzeug (€)</label><input id="b-kaufpreis" type="number" step="100" min="0" value="30000" oninput="updateBallonErgebnis()"></div>
+        <div class="field"><label>Anzahlung (€)</label><input id="b-anzahlung" type="number" step="100" min="0" value="5000" oninput="updateBallonErgebnis()"></div>
+        <div class="field"><label>Zinssatz p.a. (%)</label><input id="b-zinssatz" type="number" step="0.01" min="0" value="6.5" oninput="updateBallonErgebnis()"></div>
+        <div class="field"><label>Laufzeit (Monate)</label><input id="b-laufzeit" type="number" step="1" min="1" value="36" oninput="updateBallonErgebnis()"></div>
+      </form>
+
+      <h3 style="margin-top:22px">Schlussrate oder Monatsrate vorgeben</h3>
+      <div class="toggle-group" id="ballon-modus-toggle">
+        <button type="button" class="toggle-btn active" data-modus="schlussrate" onclick="setBallonModus('schlussrate')">Schlussrate vorgeben</button>
+        <button type="button" class="toggle-btn" data-modus="rate" onclick="setBallonModus('rate')">Monatsrate vorgeben</button>
+      </div>
+      <form class="inline" onsubmit="event.preventDefault()" style="margin-top:10px">
+        <div class="field" id="b-feld-schlussrate"><label>Schlussrate (€)</label><input id="b-schlussrate" type="number" step="100" min="0" value="12000" oninput="updateBallonErgebnis()"></div>
+        <div class="field" id="b-feld-rate" style="display:none"><label>Monatliche Rate (€)</label><input id="b-rate" type="number" step="10" min="0" oninput="updateBallonErgebnis()"></div>
+      </form>
+      <div class="note">"Schlussrate vorgeben" passt zum Händler-/Bank-Angebot (die nennen meist schon den Restwert) → der Rechner ermittelt die nötige Monatsrate. "Monatsrate vorgeben" passt, wenn du von deinem Budget ausgehen willst → der Rechner ermittelt die resultierende Schlussrate.</div>
+    </div>
+
+    <div id="ballon-ergebnis"></div>`;
+
+  updateRechnerErgebnis();
+  updateBallonErgebnis();
+}
+
+function mapEmbedUrl(o) {
+  const adresse = o.kartenAdresse && o.kartenAdresse.trim() ? o.kartenAdresse : o.adresse;
+  if (!adresse) return null;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(adresse)}&t=k&z=18&ie=UTF8&iwloc=&output=embed`;
+}
+
+// ============================================================
+// WERTERMITTLUNG: Marktwert (Ertragswertverfahren) & Beleihungswert (BelWertV-nah)
+// ============================================================
+
+// Jahresrohertrag wird live aus den Einheiten abgeleitet (Soll-Kaltmiete × 12) —
+// keine Zahl doppelt pflegen, derselbe Wert wie auf dem Dashboard.
+function rohertragJahr(o) {
+  return o.einheiten.reduce((s, e) => s + Number(e.kaltmiete || 0), 0) * 12;
+}
+
+function vervielfaeltiger(zinsProzent, jahre) {
+  const i = zinsProzent / 100;
+  if (i <= 0 || jahre <= 0) return 0;
+  return (1 - Math.pow(1 + i, -jahre)) / i;
+}
+
+function berechneMarktwert(o) {
+  const rohertrag = rohertragJahr(o);
+  const bodenwert = o.grundstueck * o.bodenrichtwert;
+  const verwaltung = 300 * o.einheiten.length;
+  const instandhaltung = 12 * o.wohnflaeche;
+  const mietausfall = 0.02 * rohertrag;
+  const bewirtschaftung = verwaltung + instandhaltung + mietausfall;
+  const reinertrag = rohertrag - bewirtschaftung;
+  const bodenwertverzinsung = bodenwert * (o.liegenschaftszins / 100);
+  const gebaeudereinertrag = reinertrag - bodenwertverzinsung;
+  const verv = vervielfaeltiger(o.liegenschaftszins, o.restnutzungsdauer);
+  const gebaeudeertragswert = gebaeudereinertrag * verv;
+  const marktwert = bodenwert + gebaeudeertragswert;
+  return { rohertrag, bodenwert, verwaltung, instandhaltung, mietausfall, bewirtschaftung, reinertrag, bodenwertverzinsung, gebaeudereinertrag, verv, gebaeudeertragswert, marktwert };
+}
+
+function berechneBeleihungswert(o) {
+  const rohertrag = rohertragJahr(o);
+  const bodenwert = o.grundstueck * o.bodenrichtwert;
+  const nachhaltigeMiete = rohertrag * (o.nachhaltigeMieteProzent / 100);
+  const belwertBewirtschaftung = nachhaltigeMiete * (o.belwertBewirtschaftungProzent / 100);
+  const nachhaltigerReinertrag = nachhaltigeMiete - belwertBewirtschaftung;
+  const belwertZins = o.liegenschaftszins + o.belwertZinsZuschlag;
+  const bodenwertverzinsung = bodenwert * (belwertZins / 100);
+  const gebaeudereinertrag = nachhaltigerReinertrag - bodenwertverzinsung;
+  const verv = vervielfaeltiger(belwertZins, o.restnutzungsdauer);
+  const gebaeudeertragswert = gebaeudereinertrag * verv;
+  const rohwert = bodenwert + gebaeudeertragswert;
+  const abschlag = rohwert * (o.belwertSicherheitsabschlagProzent / 100);
+  const beleihungswert = rohwert - abschlag;
+  return { rohertrag, bodenwert, nachhaltigeMiete, belwertBewirtschaftung, nachhaltigerReinertrag, belwertZins, bodenwertverzinsung, gebaeudereinertrag, verv, gebaeudeertragswert, rohwert, abschlag, beleihungswert };
+}
+
+// Kleiner SVG-Fortschrittsring (z.B. für Tilgungsfortschritt)
+function renderRing(percent, labelHtml) {
+  const p = Math.max(0, Math.min(100, percent));
+  const r = 42, c = 2 * Math.PI * r;
+  const offset = c * (1 - p / 100);
+  return `
+    <div class="ring-wrap">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <circle cx="55" cy="55" r="${r}" fill="none" stroke="#2a2a2a" stroke-width="8"></circle>
+        <circle cx="55" cy="55" r="${r}" fill="none" stroke="url(#ringGrad)" stroke-width="8"
+          stroke-linecap="butt" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+          transform="rotate(-90 55 55)" style="transition: stroke-dashoffset .5s ease"></circle>
+        <defs>
+          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#b8241d"></stop>
+            <stop offset="100%" stop-color="#e8342c"></stop>
+          </linearGradient>
+        </defs>
+        <text x="55" y="60" text-anchor="middle" class="ring-pct">${p.toFixed(1)}%</text>
+      </svg>
+      <div class="ring-label">${labelHtml}</div>
+    </div>`;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const el = document.getElementById("view-dashboard");
+  if (DATA.objekte.length === 0) {
+    el.innerHTML = `<div class="card"><div class="empty">Noch keine Objekte angelegt. Leg unter "🏗️ Objekte" dein erstes Objekt an.</div></div>`;
+    return;
+  }
+
+  let html = "";
+  let gesamtEinnahmen = 0, gesamtKostenUmlage = 0, gesamtKostenSelbst = 0, gesamtVermoegen = 0, gesamtUeberschussVorSteuern = 0;
+
+  for (const o of DATA.objekte) {
+    const einnahmen = DATA.mieteinnahmen
+      .filter(m => m.objektId === o.id)
+      .reduce((s, m) => s + Number(m.betrag), 0);
+    const kostenObjekt = DATA.kosten.filter(k => k.objektId === o.id);
+    const kostenUmlage = kostenObjekt.filter(k => k.umlagefaehig).reduce((s, k) => s + Number(k.betrag), 0);
+    const kostenSelbst = kostenObjekt.filter(k => !k.umlagefaehig).reduce((s, k) => s + Number(k.betrag), 0);
+    const sollMieteMonat = o.einheiten.reduce((s, e) => s + Number(e.kaltmiete || 0), 0);
+    const mietueberschuss = einnahmen - kostenSelbst;
+
+    const fk = finanzKennzahlen(o);
+    const vermoegen = (fk ? fk.getilgtGesamt : 0) + mietueberschuss;
+    const monatlicheRateObjekt = fk ? fk.rate : 0;
+    const ueberschussVorSteuern = sollMieteMonat - monatlicheRateObjekt;
+
+    gesamtEinnahmen += einnahmen;
+    gesamtKostenUmlage += kostenUmlage;
+    gesamtKostenSelbst += kostenSelbst;
+    gesamtVermoegen += vermoegen;
+    gesamtUeberschussVorSteuern += ueberschussVorSteuern;
+
+    const metaText = `${o.einheiten.length} Einheit${o.einheiten.length === 1 ? "" : "en"}${o.typ ? " · " + o.typ : ""}${o.baujahr ? " · Baujahr " + o.baujahr : ""}`;
+
+    html += `
+      <div class="card">
+        ${listingHero(o, metaText)}
+        <div class="grid-kpi">
+          <div class="kpi"><div class="label">Soll-Kaltmiete (alle Einheiten) €/Monat</div><div class="value">${fmtEUR(sollMieteMonat)}</div></div>
+          <div class="kpi hero"><div class="label">Überschuss vor Steuern €/Monat</div><div class="value ${ueberschussVorSteuern >= 0 ? 'green' : 'red'}">${fmtEUR(ueberschussVorSteuern)}</div><div class="sub-note">${fk ? "Soll-Miete − Kreditrate (Zins+Tilgung)" : "kein Darlehen hinterlegt = volle Miete"}</div></div>
+          <div class="kpi"><div class="label">Tatsächliche Mieteinnahmen (erfasst)</div><div class="value green">${fmtEUR(einnahmen)}</div></div>
+          <div class="kpi"><div class="label">Kosten nicht umlagefähig (ich selbst)</div><div class="value red">${fmtEUR(kostenSelbst)}</div></div>
+          ${fk ? `<div class="kpi"><div class="label">Restschuld aktuell</div><div class="value">${fmtEUR(fk.restschuldAktuell)}</div><div class="sub-note">${fk.fortschrittProzent.toFixed(2)} % bereits getilgt</div></div>` : ""}
+          <div class="kpi"><div class="label">Vermögensaufbau bisher</div><div class="value ${vermoegen >= 0 ? 'green' : 'red'}">${fmtEUR(vermoegen)}</div><div class="sub-note">Tilgung + Mietüberschuss</div></div>
+        </div>
+      </div>`;
+  }
+
+  html = `
+    <div class="grid-kpi">
+      <div class="kpi"><div class="label">Gesamt-Mieteinnahmen (erfasst)</div><div class="value green">${fmtEUR(gesamtEinnahmen)}</div></div>
+      <div class="kpi hero"><div class="label">Überschuss vor Steuern gesamt €/Monat</div><div class="value ${gesamtUeberschussVorSteuern >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtUeberschussVorSteuern)}</div></div>
+      <div class="kpi"><div class="label">Gesamt-Kosten umlagefähig</div><div class="value">${fmtEUR(gesamtKostenUmlage)}</div></div>
+      <div class="kpi"><div class="label">Gesamt-Kosten eigene Last</div><div class="value red">${fmtEUR(gesamtKostenSelbst)}</div></div>
+      <div class="kpi"><div class="label">Vermögensaufbau gesamt</div><div class="value ${gesamtVermoegen >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtVermoegen)}</div></div>
+    </div>
+    <div class="note" style="margin:-8px 0 20px">„Überschuss vor Steuern" = Soll-Kaltmiete abzüglich der kompletten monatlichen Kreditrate (Zins- und Tilgungsanteil) — das ist, was von der Miete tatsächlich monatlich bei dir ankommt, bevor Einkommensteuer auf die Mieteinnahmen anfällt. Einmalige/nicht wiederkehrende Kosten (Notar, Makler etc.) sind hier bewusst nicht mit eingerechnet, da sie keine laufenden Monatskosten sind.</div>
+  ` + html;
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// OBJEKTE
+// ============================================================
+function renderObjekte() {
+  const el = document.getElementById("view-objekte");
+  let html = "";
+
+  for (const o of DATA.objekte) {
+    html += `
+      <div class="card">
+        ${listingHero(o, o.typ || "")}
+        <div style="display:flex; justify-content:flex-end; margin:-6px 0 14px">
+          <button class="danger" onclick="deleteObjekt('${o.id}')">Objekt löschen</button>
+        </div>
+        <table>
+          <tr><td>Typ</td><td>${o.typ || "–"}</td><td>Baujahr</td><td>${o.baujahr || "–"}</td></tr>
+          <tr><td>Wohnfläche</td><td>${o.wohnflaeche || "–"} m²</td><td>Grundstück</td><td>${o.grundstueck || "–"} m²</td></tr>
+          <tr><td>Energieeffizienzklasse</td><td>${o.energieeffizienzklasse || "–"}</td><td>Kaufpreis</td><td>${fmtEUR(o.kaufpreis)}</td></tr>
+          <tr><td>Kaufdatum</td><td>${fmtDate(o.kaufdatum)}</td><td></td><td></td></tr>
+        </table>
+
+        <details class="edit-box">
+          <summary>✏️ Objektdaten, Bild &amp; Finanzierung bearbeiten</summary>
+          <form class="inline" onsubmit="updateObjekt(event,'${o.id}')">
+            <div class="field wide"><label>Adresse</label><input name="adresse" required value="${o.adresse || ''}"></div>
+            <div class="field"><label>Typ</label><input name="typ" value="${o.typ || ''}"></div>
+            <div class="field"><label>Baujahr</label><input name="baujahr" type="number" value="${o.baujahr || ''}"></div>
+            <div class="field"><label>Wohnfläche (m²)</label><input name="wohnflaeche" type="number" step="0.01" value="${o.wohnflaeche || ''}"></div>
+            <div class="field"><label>Grundstück (m²)</label><input name="grundstueck" type="number" step="0.01" value="${o.grundstueck || ''}"></div>
+            <div class="field"><label>Energieeffizienzklasse</label><input name="energieeffizienzklasse" value="${o.energieeffizienzklasse || ''}"></div>
+            <div class="field"><label>Kaufpreis (€)</label><input name="kaufpreis" type="number" step="0.01" value="${o.kaufpreis || ''}"></div>
+            <div class="field"><label>Kaufdatum</label><input name="kaufdatum" type="date" value="${o.kaufdatum || ''}"></div>
+
+            <div class="field wide"><label>Bild-URL (optional)</label><input name="bildUrl" placeholder="https://..." value="${o.bildUrl || ''}"></div>
+            <div class="field"><label>oder Bild-Datei hochladen</label><input name="bildDatei" type="file" accept="image/*"></div>
+            <div class="field wide"><label>Karten-Adresse (optional, falls abweichend)</label><input name="kartenAdresse" placeholder="leer = normale Adresse verwenden" value="${o.kartenAdresse || ''}"></div>
+
+            <div class="field"><label>Darlehenssumme (€)</label><input name="darlehenssumme" type="number" step="0.01" value="${o.darlehenssumme || ''}"></div>
+            <div class="field"><label>Zinssatz p.a. (%)</label><input name="zinssatz" type="number" step="0.01" value="${o.zinssatz || ''}"></div>
+            <div class="field"><label>Tilgungssatz p.a. (%)</label><input name="tilgungssatz" type="number" step="0.01" value="${o.tilgungssatz || ''}"></div>
+            <div class="field"><label>Kreditstart</label><input name="kreditstart" type="date" value="${o.kreditstart || ''}"></div>
+
+            <h3 style="width:100%">Annahmen für Wertermittlung (Marktwert &amp; Beleihungswert)</h3>
+            <div class="field"><label>Bodenrichtwert (€/m²)</label><input name="bodenrichtwert" type="number" step="1" value="${o.bodenrichtwert}"></div>
+            <div class="field"><label>Liegenschaftszins (%)</label><input name="liegenschaftszins" type="number" step="0.1" value="${o.liegenschaftszins}"></div>
+            <div class="field"><label>Restnutzungsdauer (Jahre)</label><input name="restnutzungsdauer" type="number" value="${o.restnutzungsdauer}"></div>
+            <div class="field"><label>Nachhaltige Miete (% Marktmiete)</label><input name="nachhaltigeMieteProzent" type="number" step="1" value="${o.nachhaltigeMieteProzent}"></div>
+            <div class="field"><label>Bewirtschaftungspauschale Beleihung (%)</label><input name="belwertBewirtschaftungProzent" type="number" step="1" value="${o.belwertBewirtschaftungProzent}"></div>
+            <div class="field"><label>Zinszuschlag Beleihung (%-Punkte)</label><input name="belwertZinsZuschlag" type="number" step="0.1" value="${o.belwertZinsZuschlag}"></div>
+            <div class="field"><label>Sicherheitsabschlag Beleihung (%)</label><input name="belwertSicherheitsabschlagProzent" type="number" step="1" value="${o.belwertSicherheitsabschlagProzent}"></div>
+
+            <button class="primary" type="submit">Speichern</button>
+          </form>
+          <div class="note">Zinssatz kenne ich nicht automatisch — trag hier deinen echten Darlehenszins ein (steht im Darlehensvertrag/ESIS-Merkblatt), dann rechnet die App Restschuld, Tilgungsplan, Marktwert und Beleihungswert auf dieser Basis.</div>
+        </details>
+
+        <h3 style="margin-top:16px">Einheiten</h3>
+        <table>
+          <tr><th>Name</th><th class="num">Fläche (m²)</th><th class="num">Zimmer</th><th class="num">Kaltmiete €</th><th>Status</th><th></th></tr>
+          ${o.einheiten.map(e => `
+            <tr>
+              <td>${e.name}</td><td class="num">${e.flaeche}</td><td class="num">${e.zimmer}</td>
+              <td class="num">${fmtEUR(e.kaltmiete)}</td><td>${e.status || "–"}</td>
+              <td><button class="danger" onclick="deleteEinheit('${o.id}','${e.id}')">löschen</button></td>
+            </tr>`).join("")}
+        </table>
+        <form class="inline" onsubmit="addEinheit(event,'${o.id}')">
+          <div class="field"><label>Name</label><input name="name" required placeholder="z.B. 1. OG"></div>
+          <div class="field"><label>Fläche (m²)</label><input name="flaeche" type="number" step="0.01" required></div>
+          <div class="field"><label>Zimmer</label><input name="zimmer" type="number" required></div>
+          <div class="field"><label>Kaltmiete (€)</label><input name="kaltmiete" type="number" step="0.01" required></div>
+          <div class="field wide"><label>Status</label><input name="status" placeholder="z.B. vermietet, frei ab sofort"></div>
+          <button class="primary" type="submit">+ Einheit hinzufügen</button>
+        </form>
+      </div>`;
+  }
+
+  html += `
+    <div class="card">
+      <h2>Neues Objekt anlegen</h2>
+      <form class="inline" onsubmit="addObjekt(event)">
+        <div class="field wide"><label>Adresse</label><input name="adresse" required placeholder="Straße Nr., PLZ Ort"></div>
+        <div class="field"><label>Typ</label><input name="typ" placeholder="z.B. Zweifamilienhaus"></div>
+        <div class="field"><label>Baujahr</label><input name="baujahr" type="number"></div>
+        <div class="field"><label>Wohnfläche (m²)</label><input name="wohnflaeche" type="number" step="0.01"></div>
+        <div class="field"><label>Grundstück (m²)</label><input name="grundstueck" type="number" step="0.01"></div>
+        <div class="field"><label>Energieeffizienzklasse</label><input name="energieeffizienzklasse" placeholder="z.B. D"></div>
+        <div class="field"><label>Kaufpreis (€)</label><input name="kaufpreis" type="number" step="0.01"></div>
+        <div class="field"><label>Kaufdatum</label><input name="kaufdatum" type="date"></div>
+        <div class="field"><label>Darlehenssumme (€)</label><input name="darlehenssumme" type="number" step="0.01"></div>
+        <div class="field"><label>Zinssatz p.a. (%)</label><input name="zinssatz" type="number" step="0.01"></div>
+        <div class="field"><label>Tilgungssatz p.a. (%)</label><input name="tilgungssatz" type="number" step="0.01"></div>
+        <div class="field"><label>Kreditstart</label><input name="kreditstart" type="date"></div>
+        <button class="primary" type="submit">+ Objekt anlegen</button>
+      </form>
+    </div>`;
+
+  el.innerHTML = html;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addObjekt(ev) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  DATA.objekte.push({
+    id: uid(),
+    adresse: f.get("adresse"),
+    typ: f.get("typ"),
+    baujahr: Number(f.get("baujahr")) || null,
+    wohnflaeche: Number(f.get("wohnflaeche")) || null,
+    grundstueck: Number(f.get("grundstueck")) || null,
+    energieeffizienzklasse: f.get("energieeffizienzklasse"),
+    kaufpreis: Number(f.get("kaufpreis")) || null,
+    kaufdatum: f.get("kaufdatum") || null,
+    bildUrl: "", bildDataUrl: null, kartenAdresse: "",
+    darlehenssumme: Number(f.get("darlehenssumme")) || null,
+    zinssatz: f.get("zinssatz") ? Number(f.get("zinssatz")) : null,
+    tilgungssatz: f.get("tilgungssatz") ? Number(f.get("tilgungssatz")) : null,
+    kreditstart: f.get("kreditstart") || null,
+    bodenrichtwert: 0,
+    liegenschaftszins: 3.5,
+    restnutzungsdauer: 25,
+    nachhaltigeMieteProzent: 90,
+    belwertBewirtschaftungProzent: 23,
+    belwertZinsZuschlag: 0.5,
+    belwertSicherheitsabschlagProzent: 15,
+    einheiten: []
+  });
+  saveData(); renderAll();
+}
+
+async function updateObjekt(ev, objektId) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const o = getObjekt(objektId);
+  o.adresse = f.get("adresse");
+  o.typ = f.get("typ");
+  o.baujahr = Number(f.get("baujahr")) || null;
+  o.wohnflaeche = Number(f.get("wohnflaeche")) || null;
+  o.grundstueck = Number(f.get("grundstueck")) || null;
+  o.energieeffizienzklasse = f.get("energieeffizienzklasse");
+  o.kaufpreis = Number(f.get("kaufpreis")) || null;
+  o.kaufdatum = f.get("kaufdatum") || null;
+  o.bildUrl = f.get("bildUrl") || "";
+  o.kartenAdresse = f.get("kartenAdresse") || "";
+  o.darlehenssumme = f.get("darlehenssumme") ? Number(f.get("darlehenssumme")) : null;
+  o.zinssatz = f.get("zinssatz") ? Number(f.get("zinssatz")) : null;
+  o.tilgungssatz = f.get("tilgungssatz") ? Number(f.get("tilgungssatz")) : null;
+  o.kreditstart = f.get("kreditstart") || null;
+  o.bodenrichtwert = Number(f.get("bodenrichtwert")) || 0;
+  o.liegenschaftszins = Number(f.get("liegenschaftszins")) || 0;
+  o.restnutzungsdauer = Number(f.get("restnutzungsdauer")) || 0;
+  o.nachhaltigeMieteProzent = Number(f.get("nachhaltigeMieteProzent")) || 0;
+  o.belwertBewirtschaftungProzent = Number(f.get("belwertBewirtschaftungProzent")) || 0;
+  o.belwertZinsZuschlag = Number(f.get("belwertZinsZuschlag")) || 0;
+  o.belwertSicherheitsabschlagProzent = Number(f.get("belwertSicherheitsabschlagProzent")) || 0;
+
+  const file = f.get("bildDatei");
+  if (file && file.size > 0) {
+    try {
+      o.bildDataUrl = await readFileAsDataUrl(file);
+    } catch (e) {
+      alert("Bild konnte nicht gelesen werden: " + e.message);
+    }
+  }
+
+  saveData(); renderAll();
+}
+
+function deleteObjekt(id) {
+  if (!confirm("Objekt inkl. aller zugehörigen Mieteinnahmen und Kosten wirklich löschen?")) return;
+  DATA.objekte = DATA.objekte.filter(o => o.id !== id);
+  DATA.mieteinnahmen = DATA.mieteinnahmen.filter(m => m.objektId !== id);
+  DATA.kosten = DATA.kosten.filter(k => k.objektId !== id);
+  saveData(); renderAll();
+}
+
+function addEinheit(ev, objektId) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const o = getObjekt(objektId);
+  o.einheiten.push({
+    id: uid(),
+    name: f.get("name"),
+    flaeche: Number(f.get("flaeche")),
+    zimmer: Number(f.get("zimmer")),
+    kaltmiete: Number(f.get("kaltmiete")),
+    status: f.get("status")
+  });
+  saveData(); renderAll();
+}
+
+function deleteEinheit(objektId, einheitId) {
+  if (!confirm("Einheit wirklich löschen?")) return;
+  const o = getObjekt(objektId);
+  o.einheiten = o.einheiten.filter(e => e.id !== einheitId);
+  saveData(); renderAll();
+}
+
+// ============================================================
+// FINANZIERUNG & VERMÖGEN (Tab)
+// ============================================================
+function renderFinanzierung() {
+  const el = document.getElementById("view-finanzierung");
+  if (DATA.objekte.length === 0) {
+    el.innerHTML = `<div class="card"><div class="empty">Erst ein Objekt unter "🏗️ Objekte" anlegen.</div></div>`;
+    return;
+  }
+
+  let html = "";
+  for (const o of DATA.objekte) {
+    const map = mapEmbedUrl(o);
+    const fk = finanzKennzahlen(o);
+
+    const einnahmen = DATA.mieteinnahmen.filter(m => m.objektId === o.id).reduce((s, m) => s + Number(m.betrag), 0);
+    const kostenSelbst = DATA.kosten.filter(k => k.objektId === o.id && !k.umlagefaehig).reduce((s, k) => s + Number(k.betrag), 0);
+    const mietueberschuss = einnahmen - kostenSelbst;
+    const vermoegen = (fk ? fk.getilgtGesamt : 0) + mietueberschuss;
+
+    html += `<div class="card">
+      ${listingHero(o, "Finanzierung &amp; Vermögensentwicklung")}
+      ${map ? `<iframe class="map-embed" src="${map}" loading="lazy"></iframe>` : `<div class="note">Keine Kartenansicht — Adresse unter "🏗️ Objekte" eintragen, dann erscheint hier automatisch die Satellitenkarte.</div>`}
+
+      ${fk ? `
+        <div class="fin-top">
+          ${renderRing(fk.fortschrittProzent, "Darlehen<br>getilgt")}
+          <div style="flex:1; min-width:260px">
+            <div class="grid-kpi" style="margin-bottom:0">
+              <div class="kpi hero"><div class="label">Restschuld aktuell</div><div class="value">${fmtEUR(fk.restschuldAktuell)}</div></div>
+              <div class="kpi"><div class="label">Monatliche Rate</div><div class="value">${fmtEUR(fk.rate)}</div></div>
+              <div class="kpi"><div class="label">davon Zinsanteil</div><div class="value">${fmtEUR(fk.aktuellerZinsanteil)}</div></div>
+              <div class="kpi"><div class="label">davon Tilgungsanteil</div><div class="value">${fmtEUR(fk.aktuellerTilgungsanteil)}</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-kpi">
+          <div class="kpi"><div class="label">Bereits getilgt</div><div class="value green">${fmtEUR(fk.getilgtGesamt)}</div><div class="sub-note">seit Kreditstart ${fmtDate(o.kreditstart)}</div></div>
+        </div>
+        <div class="progress-bar"><div class="fill" style="width:${Math.min(100, fk.fortschrittProzent).toFixed(2)}%"></div></div>
+        <div class="note">${fk.fortschrittProzent.toFixed(2)} % des Darlehens getilgt (${fk.monateGezahlt} Monate seit Kreditstart ${fmtDate(o.kreditstart)})</div>
+
+        <div class="formula-note">
+          <b>Vermögensaufbau bisher: ${fmtEUR(vermoegen)}</b><br>
+          = Bereits getilgt (${fmtEUR(fk.getilgtGesamt)}) + Mietüberschuss (${fmtEUR(mietueberschuss)})<br>
+          Mietüberschuss = erfasste Mieteinnahmen (${fmtEUR(einnahmen)}) − nicht umlagefähige Kosten (${fmtEUR(kostenSelbst)})<br>
+          Zinsen sind hier bewusst nicht nochmal abgezogen — die stecken in der monatlichen Kreditrate, die du vermutlich aus der Miete zahlst. Falls du Zinszahlungen zusätzlich manuell als "Kreditzinsen"-Kosten einträgst, wird das in der Mietüberschuss-Rechnung berücksichtigt.
+        </div>
+
+        <h3 style="margin-top:16px">Tilgungsplan nach Jahren (bis heute)</h3>
+        <table>
+          <tr><th>Jahr</th><th class="num">Gezahlte Zinsen</th><th class="num">Gezahlte Tilgung</th><th class="num">Restschuld Jahresende</th></tr>
+          ${amortisationJaehrlich(o).map(r => `<tr><td>${r.jahr}</td><td class="num">${fmtEUR(r.zinsen)}</td><td class="num">${fmtEUR(r.tilgung)}</td><td class="num">${fmtEUR(r.restschuldEnde)}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">Noch keine volle Zahlungsperiode seit Kreditstart.</td></tr>`}
+        </table>
+      ` : `<div class="note">Noch keine Finanzierungsdaten hinterlegt — unter "🏗️ Objekte" → "Objektdaten bearbeiten" Darlehenssumme, Zinssatz, Tilgungssatz und Kreditstart eintragen, dann erscheinen hier Restschuld, Tilgungsplan und Vermögensaufbau automatisch.</div>`}
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// WERTERMITTLUNG (Marktwert & Beleihungswert)
+// ============================================================
+function renderWertermittlung() {
+  const el = document.getElementById("view-wertermittlung");
+  if (DATA.objekte.length === 0) {
+    el.innerHTML = `<div class="card"><div class="empty">Erst ein Objekt unter "🏗️ Objekte" anlegen.</div></div>`;
+    return;
+  }
+  let html = "";
+  for (const o of DATA.objekte) {
+    const mw = berechneMarktwert(o);
+    const bw = berechneBeleihungswert(o);
+    const diffKaufpreis = o.kaufpreis ? ((mw.marktwert / o.kaufpreis) - 1) * 100 : null;
+    const auslauf = o.darlehenssumme ? (o.darlehenssumme / bw.beleihungswert) * 100 : null;
+
+    html += `<div class="card">
+      ${listingHero(o, "Marktwert &amp; Beleihungswert")}
+
+      <div class="value-split">
+        <div class="half markt">
+          <div class="eyebrow">💰 Marktwert (Ertragswertverfahren)</div>
+          <div class="big serif">${fmtEUR(mw.marktwert)}</div>
+          <div class="per-m2">${fmtEUR(mw.marktwert / o.wohnflaeche)} / m²${diffKaufpreis !== null ? ` · ${diffKaufpreis >= 0 ? "+" : ""}${diffKaufpreis.toFixed(1)} % vs. Kaufpreis` : ""}</div>
+        </div>
+        <div class="half belw">
+          <div class="eyebrow">🏦 Beleihungswert (Bank, konservativ)</div>
+          <div class="big serif">${fmtEUR(bw.beleihungswert)}</div>
+          <div class="per-m2">${fmtEUR(bw.beleihungswert / o.wohnflaeche)} / m² · ${((bw.beleihungswert / mw.marktwert - 1) * 100).toFixed(1)} % vs. Marktwert</div>
+        </div>
+      </div>
+
+      <h3>💰 Marktwert — Herleitung</h3>
+      <table>
+        <tr><td>Bodenwert</td><td class="num">${o.grundstueck} m² × ${fmtEUR(o.bodenrichtwert)}/m²</td><td class="num">${fmtEUR(mw.bodenwert)}</td></tr>
+        <tr><td>Jahresrohertrag (Soll-Miete × 12)</td><td></td><td class="num">${fmtEUR(mw.rohertrag)}</td></tr>
+        <tr><td>− Bewirtschaftungskosten</td><td class="num">Verwaltung + Instandhaltung + Mietausfallwagnis</td><td class="num">− ${fmtEUR(mw.bewirtschaftung)}</td></tr>
+        <tr class="subtotal"><td>= Reinertrag</td><td></td><td class="num">${fmtEUR(mw.reinertrag)}</td></tr>
+        <tr><td>− Bodenwertverzinsung</td><td class="num">× ${fmtPct(o.liegenschaftszins)}</td><td class="num">− ${fmtEUR(mw.bodenwertverzinsung)}</td></tr>
+        <tr class="subtotal"><td>= Gebäudereinertrag × Vervielfältiger (${mw.verv.toFixed(2)})</td><td></td><td class="num">${fmtEUR(mw.gebaeudeertragswert)}</td></tr>
+        <tr class="subtotal" style="font-size:14.5px"><td><b>= Marktwert (+ Bodenwert)</b></td><td></td><td class="num"><b>${fmtEUR(mw.marktwert)}</b></td></tr>
+      </table>
+
+      <h3>🏦 Beleihungswert — Herleitung</h3>
+      <table>
+        <tr><td>Nachhaltige Miete</td><td class="num">${fmtPct(o.nachhaltigeMieteProzent)} der Marktmiete</td><td class="num">${fmtEUR(bw.nachhaltigeMiete)}</td></tr>
+        <tr><td>− Bewirtschaftungspauschale</td><td class="num">${fmtPct(o.belwertBewirtschaftungProzent)}</td><td class="num">− ${fmtEUR(bw.belwertBewirtschaftung)}</td></tr>
+        <tr class="subtotal"><td>= Nachhaltiger Reinertrag</td><td></td><td class="num">${fmtEUR(bw.nachhaltigerReinertrag)}</td></tr>
+        <tr><td>− Bodenwertverzinsung</td><td class="num">× ${fmtPct(bw.belwertZins)} (Liegenschaftszins + ${o.belwertZinsZuschlag} Pkt.)</td><td class="num">− ${fmtEUR(bw.bodenwertverzinsung)}</td></tr>
+        <tr class="subtotal"><td>= Rohwert (Gebäudeertrag × ${bw.verv.toFixed(2)} + Bodenwert)</td><td></td><td class="num">${fmtEUR(bw.rohwert)}</td></tr>
+        <tr><td>− Sicherheitsabschlag</td><td class="num">${fmtPct(o.belwertSicherheitsabschlagProzent)}</td><td class="num">− ${fmtEUR(bw.abschlag)}</td></tr>
+        <tr class="subtotal" style="font-size:14.5px"><td><b>= Beleihungswert</b></td><td></td><td class="num"><b>${fmtEUR(bw.beleihungswert)}</b></td></tr>
+      </table>
+
+      ${o.darlehenssumme ? `
+        <div class="grid-kpi" style="margin-top:20px">
+          <div class="kpi"><div class="label">Darlehenssumme</div><div class="value">${fmtEUR(o.darlehenssumme)}</div></div>
+          <div class="kpi"><div class="label">Beleihungsauslauf</div><div class="value ${auslauf <= 100 ? 'green' : 'red'}">${fmtPct(auslauf)}</div></div>
+        </div>
+        ${auslauf > 100 ? `<div class="warn-note"><b>Beleihungsauslauf über 100 %:</b> Das Darlehen übersteigt den konservativ ermittelten Beleihungswert — kein akutes Problem, aber relevant für eine spätere Anschlussfinanzierung oder weitere Beleihung.</div>` : ""}
+      ` : ""}
+
+      <div class="warn-note">
+        <b>Annahmen, keine Gutachten:</b> Bodenrichtwert (${fmtEUR(o.bodenrichtwert)}/m²), Liegenschaftszins (${fmtPct(o.liegenschaftszins)}) und Restnutzungsdauer (${o.restnutzungsdauer} Jahre) sind Schätzungen — unter "🏗️ Objekte" direkt editierbar. Für eine belastbare Zahl den echten Bodenrichtwert über <a href="https://www.boris.nrw.de" target="_blank">BORIS.NRW</a> nachschlagen. Kein Verkehrswertgutachten, keine echte Bankbewertung — zur eigenen Orientierung.
+      </div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ============================================================
+// MIETEINNAHMEN
+// ============================================================
+function renderBuchungen() {
+  const el = document.getElementById("view-miete");
+  if (DATA.objekte.length === 0) {
+    el.innerHTML = `<div class="card"><div class="empty">Erst ein Objekt unter "🏗️ Objekte" anlegen.</div></div>`;
+    return;
+  }
+
+  const objOptions = DATA.objekte.map(o => `<option value="${o.id}">${o.adresse}</option>`).join("");
+  const katOptions = KOSTEN_KATEGORIEN.map(k => `<option value="${k}">${k}</option>`).join("");
+
+  const sumEinnahmen = DATA.mieteinnahmen.reduce((s, m) => s + Number(m.betrag), 0);
+  const sumUmlage = DATA.kosten.filter(k => k.umlagefaehig).reduce((s, k) => s + Number(k.betrag), 0);
+  const sumSelbst = DATA.kosten.filter(k => !k.umlagefaehig).reduce((s, k) => s + Number(k.betrag), 0);
+
+  // Beide Listen zu einer chronologischen Buchungsliste zusammenführen
+  const einnahmenRows = DATA.mieteinnahmen.map(m => ({ ...m, _typ: "einnahme" }));
+  const kostenRows = DATA.kosten.map(k => ({ ...k, _typ: "kosten" }));
+  const alle = [...einnahmenRows, ...kostenRows].sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
+
+  let rows = alle.map(b => {
+    const o = getObjekt(b.objektId);
+    if (b._typ === "einnahme") {
+      const e = getEinheit(b.objektId, b.einheitId);
+      return `<tr>
+        <td>${fmtDate(b.datum)}</td>
+        <td>${o ? o.adresse : "?"}</td>
+        <td><span class="tag green">+ Einnahme</span></td>
+        <td>${e ? e.name : "–"}</td>
+        <td class="num" style="color:var(--green)">+ ${fmtEUR(b.betrag)}</td>
+        <td>${b.notiz || ""}</td>
+        <td><button class="danger" onclick="deleteMiete('${b.id}')">löschen</button></td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${fmtDate(b.datum)}</td>
+      <td>${o ? o.adresse : "?"}</td>
+      <td><span class="tag ${b.umlagefaehig ? 'green' : 'red'}">${b.umlagefaehig ? "umlagefähig" : "eigene Kosten"}</span></td>
+      <td>${b.kategorie}</td>
+      <td class="num" style="color:var(--red)">− ${fmtEUR(b.betrag)}</td>
+      <td>${b.beschreibung || ""}</td>
+      <td><button class="danger" onclick="deleteKosten('${b.id}')">löschen</button></td>
+    </tr>`;
+  }).join("");
+
+  if (!rows) rows = `<tr><td colspan="7" class="empty">Noch keine Buchungen erfasst.</td></tr>`;
+
+  el.innerHTML = `
+    <div class="grid-kpi">
+      <div class="kpi"><div class="label">Mieteinnahmen gesamt</div><div class="value green">${fmtEUR(sumEinnahmen)}</div></div>
+      <div class="kpi"><div class="label">Kosten umlagefähig</div><div class="value">${fmtEUR(sumUmlage)}</div></div>
+      <div class="kpi"><div class="label">Kosten eigene Last</div><div class="value red">${fmtEUR(sumSelbst)}</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Buchung erfassen</h2>
+      <div class="toggle-group" id="buchung-typ-toggle">
+        <button type="button" class="toggle-btn active" data-typ="einnahme" onclick="setBuchungTyp('einnahme')">💶 Einnahme</button>
+        <button type="button" class="toggle-btn" data-typ="kosten" onclick="setBuchungTyp('kosten')">🧾 Kosten</button>
+      </div>
+
+      <form class="inline" id="form-einnahme" onsubmit="addMiete(event)">
+        <div class="field"><label>Datum</label><input name="datum" type="date" required></div>
+        <div class="field"><label>Objekt</label><select name="objektId" required onchange="updateEinheitOptions(this)">${objOptions}</select></div>
+        <div class="field"><label>Einheit</label><select name="einheitId" id="miete-einheit-select"></select></div>
+        <div class="field"><label>Betrag (€)</label><input name="betrag" type="number" step="0.01" required></div>
+        <div class="field wide"><label>Notiz</label><input name="notiz" placeholder="z.B. Kaltmiete Oktober"></div>
+        <button class="primary" type="submit">+ Eintragen</button>
+      </form>
+
+      <form class="inline" id="form-kosten" onsubmit="addKosten(event)" style="display:none">
+        <div class="field"><label>Datum</label><input name="datum" type="date" required></div>
+        <div class="field"><label>Objekt</label><select name="objektId" required>${objOptions}</select></div>
+        <div class="field"><label>Kategorie</label><select name="kategorie" onchange="suggestUmlage(this)">${katOptions}</select></div>
+        <div class="field"><label>Betrag (€)</label><input name="betrag" type="number" step="0.01" required></div>
+        <div class="field checkbox"><input type="checkbox" name="umlagefaehig" id="umlage-checkbox"><label for="umlage-checkbox">umlagefähig</label></div>
+        <div class="field wide"><label>Beschreibung</label><input name="beschreibung" placeholder="z.B. Rechnungsnummer, Dienstleister"></div>
+        <button class="primary" type="submit">+ Eintragen</button>
+      </form>
+      <div class="note">Der Haken bei "umlagefähig" wird je nach Kategorie automatisch vorgeschlagen (BetrKV-Faustregel) — jederzeit selbst umstellbar.</div>
+    </div>
+
+    <div class="card">
+      <h2>Alle Buchungen</h2>
+      <table>
+        <tr><th>Datum</th><th>Objekt</th><th>Typ</th><th>Kategorie/Einheit</th><th class="num">Betrag</th><th>Notiz</th><th></th></tr>
+        ${rows}
+      </table>
+    </div>`;
+
+  const sel = el.querySelector("select[name=objektId]");
+  if (sel) updateEinheitOptions(sel);
+}
+
+function setBuchungTyp(typ) {
+  document.querySelectorAll("#buchung-typ-toggle .toggle-btn").forEach(b => b.classList.toggle("active", b.dataset.typ === typ));
+  document.getElementById("form-einnahme").style.display = typ === "einnahme" ? "flex" : "none";
+  document.getElementById("form-kosten").style.display = typ === "kosten" ? "flex" : "none";
+}
+
+function updateEinheitOptions(selectEl) {
+  const o = getObjekt(selectEl.value);
+  const target = document.getElementById("miete-einheit-select");
+  if (!target) return;
+  target.innerHTML = (o ? o.einheiten : []).map(e => `<option value="${e.id}">${e.name}</option>`).join("");
+}
+
+function addMiete(ev) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  DATA.mieteinnahmen.push({
+    id: uid(),
+    objektId: f.get("objektId"),
+    einheitId: f.get("einheitId") || null,
+    datum: f.get("datum"),
+    betrag: Number(f.get("betrag")),
+    notiz: f.get("notiz")
+  });
+  saveData(); renderAll();
+}
+
+function deleteMiete(id) {
+  DATA.mieteinnahmen = DATA.mieteinnahmen.filter(m => m.id !== id);
+  saveData(); renderAll();
+}
+
+function suggestUmlage(selectEl) {
+  const box = document.getElementById("umlage-checkbox");
+  box.checked = !NICHT_UMLAGEFAEHIG_DEFAULT.has(selectEl.value);
+}
+
+function addKosten(ev) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  DATA.kosten.push({
+    id: uid(),
+    objektId: f.get("objektId"),
+    datum: f.get("datum"),
+    kategorie: f.get("kategorie"),
+    betrag: Number(f.get("betrag")),
+    umlagefaehig: f.get("umlagefaehig") === "on",
+    beschreibung: f.get("beschreibung")
+  });
+  saveData(); renderAll();
+}
+
+function deleteKosten(id) {
+  DATA.kosten = DATA.kosten.filter(k => k.id !== id);
+  saveData(); renderAll();
+}
+
+// ============================================================
+// AUTOHANDEL
+// ============================================================
+let editingFahrzeugId = null;
+
+function renderAutohandel() {
+  const el = document.getElementById("view-autohandel");
+  const fz = DATA.fahrzeuge || [];
+  const bestand = fz.filter(f => f.status === "Bestand");
+  const verkauft = fz.filter(f => f.status === "Verkauft");
+
+  const gewinnRealisiert = verkauft.reduce((s, f) => s + (Number(f.verkaufspreis || 0) - Number(f.kaufpreis || 0) - Number(f.investitionIst || 0)), 0);
+  const gewinnGeplant = bestand.reduce((s, f) => s + (Number(f.zielpreis || 0) - Number(f.kaufpreis || 0) - Number(f.investitionGeplant || 0)), 0);
+
+  const rows = fz.map(f => {
+    const gewinn = f.status === "Verkauft"
+      ? Number(f.verkaufspreis || 0) - Number(f.kaufpreis || 0) - Number(f.investitionIst || 0)
+      : Number(f.zielpreis || 0) - Number(f.kaufpreis || 0) - Number(f.investitionGeplant || 0);
+    const tuevWarn = f.tuevBis && new Date(f.tuevBis + "-01") < new Date() ? ` <span class="tag red">TÜV abgelaufen</span>` : "";
+    const fzBild = f.bildDataUrl || f.bildUrl;
+    return `<tr>
+      <td>${fzBild ? `<img src="${fzBild}" class="objekt-thumb" alt="">` : `<div class="objekt-thumb placeholder">🚗</div>`}</td>
+      <td>${f.marke} ${f.modell}${tuevWarn}</td>
+      <td class="num">${f.baujahr || "unbekannt"}</td>
+      <td>${f.farbe || ""}</td>
+      <td class="num">${f.km ? Number(f.km).toLocaleString("de-DE") + " km" : "–"}</td>
+      <td><span class="tag ${f.status === "Bestand" ? "gold" : "green"}">${f.status}</span></td>
+      <td class="num">${fmtEUR(f.kaufpreis)}</td>
+      <td class="num">${fmtEUR(f.status === "Verkauft" ? f.investitionIst : f.investitionGeplant)}</td>
+      <td class="num">${f.status === "Verkauft" ? fmtEUR(f.verkaufspreis) : (f.zielpreis ? "Ziel " + fmtEUR(f.zielpreis) : "–")}</td>
+      <td class="num" style="color:${gewinn >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtEUR(gewinn)}</td>
+      <td>
+        <button class="ghost" onclick="editFahrzeug('${f.id}')">bearbeiten</button>
+        ${f.status === "Bestand" ? `<button class="ghost" onclick="markFahrzeugVerkauft('${f.id}')">als verkauft markieren</button>` : ""}
+        <button class="danger" onclick="deleteFahrzeug('${f.id}')">löschen</button>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="10" class="empty">Noch keine Fahrzeuge erfasst.</td></tr>`;
+
+  const edit = editingFahrzeugId ? DATA.fahrzeuge.find(f => f.id === editingFahrzeugId) : null;
+
+  el.innerHTML = `
+    <div class="grid-kpi">
+      <div class="kpi"><div class="label">Im Bestand</div><div class="value">${bestand.length}</div></div>
+      <div class="kpi"><div class="label">Verkauft gesamt</div><div class="value">${verkauft.length}</div></div>
+      <div class="kpi"><div class="label">Realisierter Gewinn</div><div class="value green">${fmtEUR(gewinnRealisiert)}</div></div>
+      <div class="kpi"><div class="label">Geplanter Gewinn (Bestand)</div><div class="value">${fmtEUR(gewinnGeplant)}</div></div>
+    </div>
+
+    <div class="card">
+      <h2>${edit ? "Fahrzeug bearbeiten" : "Fahrzeug hinzufügen"}</h2>
+      <form class="inline" id="form-fahrzeug" onsubmit="submitFahrzeug(event)">
+        <div class="field"><label>Marke</label><input name="marke" required value="${edit ? edit.marke : ""}"></div>
+        <div class="field"><label>Modell</label><input name="modell" required value="${edit ? edit.modell : ""}"></div>
+        <div class="field"><label>Baujahr</label><input name="baujahr" type="number" value="${edit && edit.baujahr ? edit.baujahr : ""}"></div>
+        <div class="field"><label>Farbe</label><input name="farbe" value="${edit ? edit.farbe || "" : ""}"></div>
+        <div class="field"><label>Kilometerstand</label><input name="km" type="number" value="${edit && edit.km ? edit.km : ""}"></div>
+        <div class="field"><label>TÜV bis (Monat)</label><input name="tuevBis" type="month" value="${edit ? edit.tuevBis || "" : ""}"></div>
+        <div class="field"><label>Kaufpreis (€)</label><input name="kaufpreis" type="number" step="0.01" value="${edit ? edit.kaufpreis : ""}"></div>
+        <div class="field"><label>Investition geplant (€)</label><input name="investitionGeplant" type="number" step="0.01" value="${edit ? edit.investitionGeplant : ""}"></div>
+        <div class="field"><label>Zielverkaufspreis (€)</label><input name="zielpreis" type="number" step="0.01" value="${edit && edit.zielpreis ? edit.zielpreis : ""}"></div>
+        <div class="field"><label>Geschäftspartner</label><input name="partner" value="${edit ? edit.partner || "" : ""}"></div>
+        <div class="field wide"><label>Bild-URL (optional)</label><input name="bildUrl" placeholder="https://..." value="${edit ? edit.bildUrl || "" : ""}"></div>
+        <div class="field"><label>oder Bild-Datei hochladen</label><input name="bildDatei" type="file" accept="image/*"></div>
+        <div class="field wide"><label>Notizen</label><input name="notizen" value="${edit ? edit.notizen || "" : ""}"></div>
+        <button class="primary" type="submit">${edit ? "Speichern" : "+ Hinzufügen"}</button>
+        ${edit ? `<button class="ghost" type="button" onclick="cancelEditFahrzeug()">Abbrechen</button>` : ""}
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Fahrzeugbestand &amp; Verkäufe</h2>
+      <table>
+        <tr><th></th><th>Fahrzeug</th><th class="num">Baujahr</th><th>Farbe</th><th class="num">km</th><th>Status</th><th class="num">Kaufpreis</th><th class="num">Investition</th><th class="num">Ziel/Verkauft</th><th class="num">Gewinn</th><th></th></tr>
+        ${rows}
+      </table>
+    </div>`;
+}
+
+async function submitFahrzeug(ev) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const payload = {
+    marke: f.get("marke"),
+    modell: f.get("modell"),
+    baujahr: f.get("baujahr") ? Number(f.get("baujahr")) : null,
+    farbe: f.get("farbe"),
+    km: f.get("km") ? Number(f.get("km")) : null,
+    tuevBis: f.get("tuevBis"),
+    kaufpreis: Number(f.get("kaufpreis")) || 0,
+    investitionGeplant: Number(f.get("investitionGeplant")) || 0,
+    zielpreis: f.get("zielpreis") ? Number(f.get("zielpreis")) : null,
+    partner: f.get("partner"),
+    bildUrl: f.get("bildUrl") || "",
+    notizen: f.get("notizen")
+  };
+
+  let bildDataUrl;
+  const file = f.get("bildDatei");
+  if (file && file.size > 0) {
+    try {
+      bildDataUrl = await readFileAsDataUrl(file);
+    } catch (e) {
+      alert("Bild konnte nicht gelesen werden: " + e.message);
+    }
+  }
+
+  if (editingFahrzeugId) {
+    const o = DATA.fahrzeuge.find(x => x.id === editingFahrzeugId);
+    Object.assign(o, payload);
+    if (bildDataUrl) o.bildDataUrl = bildDataUrl;
+    editingFahrzeugId = null;
+  } else {
+    DATA.fahrzeuge.push({ id: uid(), status: "Bestand", investitionIst: 0, verkaufspreis: null, bildDataUrl: bildDataUrl || null, ...payload });
+  }
+  saveData(); renderAll();
+}
+
+function editFahrzeug(id) {
+  editingFahrzeugId = id;
+  renderAutohandel();
+  const formEl = document.getElementById("form-fahrzeug");
+  if (formEl && formEl.scrollIntoView) formEl.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelEditFahrzeug() {
+  editingFahrzeugId = null;
+  renderAutohandel();
+}
+
+function markFahrzeugVerkauft(id) {
+  const f = DATA.fahrzeuge.find(x => x.id === id);
+  if (!f) return;
+  const preis = prompt(`Verkaufspreis für ${f.marke} ${f.modell} (€):`, f.zielpreis || "");
+  if (preis === null) return;
+  const investIst = prompt("Tatsächliche Investition bis zum Verkauf (€):", f.investitionGeplant || 0);
+  if (investIst === null) return;
+  f.status = "Verkauft";
+  f.verkaufspreis = Number(preis) || 0;
+  f.investitionIst = Number(investIst) || 0;
+  saveData(); renderAll();
+}
+
+function deleteFahrzeug(id) {
+  DATA.fahrzeuge = DATA.fahrzeuge.filter(f => f.id !== id);
+  if (editingFahrzeugId === id) editingFahrzeugId = null;
+  saveData(); renderAll();
+}
+
+// ============================================================
+// DATEN (Export/Import)
+// ============================================================
+function renderDaten() {
+  const el = document.getElementById("view-daten");
+  el.innerHTML = `
+    <div class="card">
+      <h2>Daten sichern &amp; übertragen</h2>
+      <p class="note">
+        Die App speichert alles lokal im Browser (localStorage). Das reicht für den täglichen Gebrauch,
+        ist aber an diesen einen Browser auf diesem Rechner gebunden — bei Browser-Wechsel, Cache-Löschung
+        oder einem neuen Rechner ist es weg, wenn du nicht vorher exportierst.
+        Am besten regelmäßig exportieren und die Datei z. B. im Vault-Ordner ablegen.
+        Hochgeladene Fotos werden direkt in diesen Daten mitgespeichert — bei vielen/großen Bildern kann
+        der Browser-Speicher knapp werden; im Zweifel lieber eine Bild-URL statt Datei-Upload verwenden.
+      </p>
+      <div class="toolbar">
+        <button class="primary" onclick="exportData()">⬇️ Als JSON exportieren</button>
+        <button class="ghost" onclick="document.getElementById('import-file').click()">⬆️ JSON importieren</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importData(event)">
+        <button class="ghost" onclick="resetData()">🗑️ Auf Startdaten zurücksetzen</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Rohdaten (zum Nachschauen)</h2>
+      <pre style="white-space:pre-wrap; font-size:11.5px; color:var(--muted); max-height:400px; overflow:auto;">${JSON.stringify(DATA, null, 2)}</pre>
+    </div>`;
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `immobilien-verwaltung-${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed.objekte) throw new Error("Ungültiges Format");
+      DATA = parsed;
+      saveData(); renderAll();
+      alert("Import erfolgreich.");
+    } catch (e) {
+      alert("Konnte Datei nicht importieren: " + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetData() {
+  if (!confirm("Wirklich alle Daten löschen und auf die Startdaten zurücksetzen?")) return;
+  DATA = defaultData();
+  saveData(); renderAll();
+}
+
+// ============================================================
+// FAHRZEUGBEWERTUNG (Tab) — regelbasiertes Ankauf-/Verkaufswert-Modell,
+// wie eine vereinfachte Händler-Faustformel. Keine Live-Marktdaten (reine
+// Client-App ohne Server/API) — alle Sätze bewusst einstellbar.
+// ============================================================
+let fahrzeugbewertungInitialized = false;
+
+// Reine Rechenfunktion, unabhängig vom DOM — testbar ohne Browser.
+function fahrzeugBewertung(input) {
+  const errors = [];
+  const vergleichswert = Number(input.vergleichswert) || 0;
+  const zustandNote = Number(input.zustandNote) || 0;
+
+  if (vergleichswert <= 0) errors.push("Vergleichs-Marktwert fehlt oder ist 0.");
+  if (zustandNote < 1 || zustandNote > 5) errors.push("Zustandsnote muss zwischen 1 und 5 liegen.");
+  if (errors.length) return { errors };
+
+  const zustandFaktoren = { 1: 1.00, 2: 0.90, 3: 0.75, 4: 0.55, 5: 0.35 };
+  const zustandFaktor = zustandFaktoren[zustandNote];
+  let wert = vergleichswert * zustandFaktor;
+
+  let unfallAbschlagBetrag = 0;
+  if (!input.unfallfrei) {
+    unfallAbschlagBetrag = wert * (Number(input.unfallAbschlagProzent) || 0) / 100;
+    wert -= unfallAbschlagBetrag;
+  }
+
+  const vorbesitzer = Math.max(1, Number(input.vorbesitzer) || 1);
+  let vorbesitzerAbschlagBetrag = 0;
+  if (vorbesitzer > 1) {
+    const satz = Math.min(1, (vorbesitzer - 1) * (Number(input.vorbesitzerAbschlagProzent) || 0) / 100);
+    vorbesitzerAbschlagBetrag = wert * satz;
+    wert -= vorbesitzerAbschlagBetrag;
+  }
+
+  let scheckheftZuschlagBetrag = 0;
+  if (input.scheckheft) {
+    scheckheftZuschlagBetrag = wert * (Number(input.scheckheftZuschlagProzent) || 0) / 100;
+    wert += scheckheftZuschlagBetrag;
+  }
+
+  let tuevAbschlag = 0;
+  if (input.tuevStatus === "bald") tuevAbschlag = Number(input.tuevAbschlagBald) || 0;
+  else if (input.tuevStatus === "abgelaufen") tuevAbschlag = Number(input.tuevAbschlagAbgelaufen) || 0;
+  wert -= tuevAbschlag;
+
+  const verkaufswert = Math.max(0, wert);
+
+  const handelsspanneProzent = Number(input.handelsspanneProzent) || 0;
+  const aufbereitungskosten = Number(input.aufbereitungskosten) || 0;
+  const ankaufspreis = Math.max(0, verkaufswert * (1 - handelsspanneProzent/100) - aufbereitungskosten);
+
+  return {
+    errors: [],
+    zustandFaktor,
+    unfallAbschlagBetrag, vorbesitzerAbschlagBetrag, scheckheftZuschlagBetrag, tuevAbschlag,
+    verkaufswert,
+    handelsspanneProzent, aufbereitungskosten, ankaufspreis
+  };
+}
+
+function fzAktuelleEingaben() {
+  return {
+    vergleichswert: Number(document.getElementById("fz-vergleichswert").value) || 0,
+    zustandNote: Number(document.getElementById("fz-zustand").value),
+    unfallfrei: document.getElementById("fz-unfallfrei").checked,
+    vorbesitzer: Number(document.getElementById("fz-vorbesitzer").value) || 1,
+    scheckheft: document.getElementById("fz-scheckheft").checked,
+    tuevStatus: document.getElementById("fz-tuev").value,
+    unfallAbschlagProzent: Number(document.getElementById("fz-unfallsatz").value),
+    vorbesitzerAbschlagProzent: Number(document.getElementById("fz-vorbesitzersatz").value),
+    scheckheftZuschlagProzent: Number(document.getElementById("fz-scheckheftsatz").value),
+    tuevAbschlagBald: Number(document.getElementById("fz-tuevbald").value),
+    tuevAbschlagAbgelaufen: Number(document.getElementById("fz-tuevabgelaufen").value),
+    handelsspanneProzent: Number(document.getElementById("fz-handelsspanne").value),
+    aufbereitungskosten: Number(document.getElementById("fz-aufbereitung").value)
+  };
+}
+
+function updateFahrzeugbewertung() {
+  const el = document.getElementById("fz-ergebnis");
+  if (!el) return;
+  const input = fzAktuelleEingaben();
+  const r = fahrzeugBewertung(input);
+
+  if (r.errors.length) {
+    el.innerHTML = `<div class="card"><div class="empty">${r.errors.join("<br>")}</div></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="grid-kpi">
+        <div class="kpi hero"><div class="label">Geschätzter Verkaufswert</div><div class="value">${fmtEUR(r.verkaufswert)}</div></div>
+        <div class="kpi hero"><div class="label">Empfohlener Ankaufspreis</div><div class="value">${fmtEUR(r.ankaufspreis)}</div></div>
+      </div>
+      <h3 style="margin-top:16px">Herleitung des Verkaufswerts</h3>
+      <table>
+        <tr><th>Position</th><th class="num">Betrag</th></tr>
+        <tr><td>Vergleichs-Marktwert</td><td class="num">× ${(r.zustandFaktor*100).toFixed(0)} % Zustand</td></tr>
+        ${r.unfallAbschlagBetrag > 0 ? `<tr><td>Unfall-Abschlag</td><td class="num">−${fmtEUR(r.unfallAbschlagBetrag)}</td></tr>` : ""}
+        ${r.vorbesitzerAbschlagBetrag > 0 ? `<tr><td>Vorbesitzer-Abschlag</td><td class="num">−${fmtEUR(r.vorbesitzerAbschlagBetrag)}</td></tr>` : ""}
+        ${r.scheckheftZuschlagBetrag > 0 ? `<tr><td>Scheckheft-Zuschlag</td><td class="num">+${fmtEUR(r.scheckheftZuschlagBetrag)}</td></tr>` : ""}
+        ${r.tuevAbschlag > 0 ? `<tr><td>TÜV-Abschlag</td><td class="num">−${fmtEUR(r.tuevAbschlag)}</td></tr>` : ""}
+        <tr class="subtotal"><td>Verkaufswert</td><td class="num">${fmtEUR(r.verkaufswert)}</td></tr>
+      </table>
+      <div class="formula-note">
+        <b>Ankaufspreis-Herleitung:</b><br>
+        Verkaufswert (${fmtEUR(r.verkaufswert)}) − Handelsspanne (${r.handelsspanneProzent}%, ${fmtEUR(r.verkaufswert * r.handelsspanneProzent/100)}) − Aufbereitungskosten (${fmtEUR(r.aufbereitungskosten)})<br>
+        = <b>${fmtEUR(r.ankaufspreis)}</b>
+      </div>
+      <div class="note">Basis ist dein eigener Vergleichs-Marktwert (z.B. aus Kleinanzeigen/mobile.de recherchiert) — Zustand, Unfall/Vorbesitzer, Scheckheft und TÜV passen ihn an dein konkretes Fahrzeug an. Keine Alterskurve, kein Neupreis nötig.</div>
+    </div>`;
+}
+
+// Der Tab wird nur EINMAL aufgebaut (nicht bei jedem renderAll()), damit
+// Eingaben beim Wechsel in andere Tabs nicht verloren gehen.
+function renderFahrzeugbewertung() {
+  if (fahrzeugbewertungInitialized) return;
+  fahrzeugbewertungInitialized = true;
+  const el = document.getElementById("view-fahrzeugbewertung");
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>💰 Fahrzeugbewertung</h2>
+      <div class="note">Schätzt Verkaufswert und empfohlenen Ankaufspreis nach einer vereinfachten Händler-Faustformel — frei, unabhängig vom Fuhrpark unter "🚗 Autohandel", nichts wird gespeichert.</div>
+
+      <form class="inline" onsubmit="event.preventDefault()">
+        <div class="field wide"><label>Vergleichs-Marktwert (€)</label><input id="fz-vergleichswert" type="number" step="50" min="0" value="3700" oninput="updateFahrzeugbewertung()"></div>
+        <div class="field"><label>Zustand (optisch &amp; technisch)</label>
+          <select id="fz-zustand" onchange="updateFahrzeugbewertung()">
+            <option value="1">1 — neuwertig</option>
+            <option value="2" selected>2 — gut</option>
+            <option value="3">3 — akzeptabel</option>
+            <option value="4">4 — sanierungsbedürftig</option>
+            <option value="5">5 — dringend/Sofortmaßnahme</option>
+          </select>
+        </div>
+        <div class="field"><label>TÜV-Status</label>
+          <select id="fz-tuev" onchange="updateFahrzeugbewertung()">
+            <option value="frisch" selected>frisch</option>
+            <option value="bald">bald fällig (&lt; 6 Monate)</option>
+            <option value="abgelaufen">abgelaufen</option>
+          </select>
+        </div>
+        <div class="field checkbox"><input type="checkbox" id="fz-unfallfrei" checked onchange="updateFahrzeugbewertung()"><label for="fz-unfallfrei">unfallfrei</label></div>
+      </form>
+      <div class="note">Vergleichs-Marktwert = was ein ähnliches Fahrzeug (gleiches Modell, ähnliches Alter/Laufleistung) gerade auf Kleinanzeigen/mobile.de kostet — das ist die Basis, von der aus Zustand, TÜV und Unfall den Preis anpassen.</div>
+
+      <details class="edit-box">
+        <summary>⚙️ Details anpassen</summary>
+        <form class="inline" onsubmit="event.preventDefault()">
+          <div class="field"><label>Anzahl Vorbesitzer</label><input id="fz-vorbesitzer" type="number" step="1" min="1" value="1" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field checkbox"><input type="checkbox" id="fz-scheckheft" onchange="updateFahrzeugbewertung()"><label for="fz-scheckheft">scheckheftgepflegt</label></div>
+          <div class="field"><label>Handelsspanne für Ankauf (%)</label><input id="fz-handelsspanne" type="number" step="1" min="0" value="20" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>Aufbereitungskosten (€)</label><input id="fz-aufbereitung" type="number" step="10" min="0" value="300" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>Unfall-Abschlag (%)</label><input id="fz-unfallsatz" type="number" step="1" min="0" value="15" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>Abschlag je weiterem Vorbesitzer (%)</label><input id="fz-vorbesitzersatz" type="number" step="0.5" min="0" value="2" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>Scheckheft-Zuschlag (%)</label><input id="fz-scheckheftsatz" type="number" step="0.5" min="0" value="3" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>TÜV-Abschlag "bald fällig" (€)</label><input id="fz-tuevbald" type="number" step="10" min="0" value="150" oninput="updateFahrzeugbewertung()"></div>
+          <div class="field"><label>TÜV-Abschlag "abgelaufen" (€)</label><input id="fz-tuevabgelaufen" type="number" step="10" min="0" value="400" oninput="updateFahrzeugbewertung()"></div>
+        </form>
+        <div class="note">Alle Sätze haben sinnvolle Standardwerte — nur anfassen, wenn du sie bewusst an deine Markterfahrung anpassen willst.</div>
+      </details>
+    </div>
+
+    <div id="fz-ergebnis"></div>`;
+
+  updateFahrzeugbewertung();
+}
+
+// ============================================================
+// NAVIGATION & INIT
+// ============================================================
+function renderAll() {
+  renderDashboard();
+  renderObjekte();
+  renderFinanzierung();
+  renderRechner();
+  renderWertermittlung();
+  renderBuchungen();
+  renderAutohandel();
+  renderFahrzeugbewertung();
+  renderDaten();
+}
+
+document.querySelectorAll("nav.tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("view-" + btn.dataset.view).classList.add("active");
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
