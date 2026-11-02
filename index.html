@@ -371,10 +371,61 @@
     .sidebar-foot { display: none; }
     .main { padding: 28px 22px 80px; }
   }
+  #login-screen {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); z-index: 100;
+  }
+  .login-card {
+    width: 100%; max-width: 340px; padding: 36px 32px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+    text-align: center;
+  }
+  .login-mark { display: flex; justify-content: center; margin-bottom: 14px; }
+  .login-title {
+    font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--text); margin-bottom: 4px;
+  }
+  .login-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  #login-form { display: flex; flex-direction: column; gap: 10px; }
+  #login-form input {
+    background: var(--bg-elevated); border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    padding: 11px 12px; color: var(--text); font-size: 13px; font-family: inherit;
+  }
+  #login-form input:focus { outline: none; border-color: var(--gold); }
+  #login-form button {
+    margin-top: 6px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
+    padding: 11px 12px; font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  #login-form button:hover { background: var(--accent-strong); }
+  #login-form button:disabled { opacity: .5; cursor: default; }
+  #login-error { font-size: 12px; color: var(--accent-strong); min-height: 16px; margin-top: 2px; }
+  .sidebar-foot a#logout-link { color: var(--muted); text-decoration: underline; }
 </style>
 </head>
 <body>
-<div class="app-shell">
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-mark">
+      <svg width="30" height="30" viewBox="0 0 22 22" fill="none">
+        <text x="0" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#c9a24a" letter-spacing="-0.5">D</text>
+        <line x1="10.6" y1="4" x2="10.6" y2="18" stroke="#c9a24a" stroke-width=".6" opacity=".55"/>
+        <text x="11.5" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#c9a24a" letter-spacing="-0.5">O</text>
+      </svg>
+    </div>
+    <div class="login-title">D&amp;O Brothers</div>
+    <div class="login-sub">Immobilien · Fahrzeuge — bitte anmelden</div>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="E-Mail" autocomplete="username" required>
+      <input type="password" id="login-password" placeholder="Passwort" autocomplete="current-password" required>
+      <button type="submit" id="login-submit">Anmelden</button>
+      <div id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell" style="display:none;">
   <aside class="sidebar">
     <div class="brand">
       <div class="mark">
@@ -400,7 +451,7 @@
       <button data-view="daten"><span class="ico">⚙️</span>Daten</button>
     </nav>
 
-    <div class="sidebar-foot">Lokale App · keine Cloud<br>Daten bleiben auf diesem Gerät</div>
+    <div class="sidebar-foot">Angemeldet als <span id="sidebar-user-email"></span><br><a href="#" id="logout-link">Abmelden</a></div>
   </aside>
 
   <main class="main">
@@ -421,7 +472,32 @@
   </main>
 </div>
 
+<!-- Firebase "compat" SDK (klassische Script-Tags, kein Build-Tool, kein
+     ES-Module nötig) -- so bleiben alle bestehenden inline onclick="..."
+     Handler im Rest der App unverändert funktionsfähig. -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
 <script>
+// Firebase-Konfigurationswerte sind beim Client-seitigen Einsatz bewusst
+// öffentlich (keine Geheimnisse) -- der eigentliche Zugriffsschutz läuft
+// über Firebase Authentication + Firestore Security Rules, nicht darüber,
+// diese Werte zu verstecken. Siehe Immobilien-Verwaltung.md für die
+// Einrichtungsschritte.
+const firebaseConfig = {
+  apiKey: "FIREBASE_API_KEY",
+  authDomain: "FIREBASE_AUTH_DOMAIN",
+  projectId: "FIREBASE_PROJECT_ID",
+  storageBucket: "FIREBASE_STORAGE_BUCKET",
+  messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+  appId: "FIREBASE_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const SHARED_DOC = db.collection("immoApp").doc("sharedData");
+
 const STORAGE_KEY = "immobilien_app_data_v2";
 
 const KOSTEN_KATEGORIEN = [
@@ -450,10 +526,13 @@ const NICHT_UMLAGEFAEHIG_DEFAULT = new Set([
 function uid() { return Math.random().toString(36).slice(2, 10); }
 
 function defaultData() {
-  // Öffentliche Demo-Version (GitHub Pages) — bewusst NUR erfundene
-  // Beispielwerte, keine echten Objekt-/Finanz-/Personendaten. Die echte
-  // Version mit echten Zahlen läuft ausschließlich lokal bzw. über den
-  // passwortgeschützten Tunnel, nie hier.
+  // Öffentliche Quelle (GitHub Pages) — bewusst NUR erfundene
+  // Beispielwerte, keine echten Objekt-/Finanz-/Personendaten. Diese
+  // Funktion wird ohnehin nur beim allerersten Login überhaupt verwendet,
+  // um den Firestore-Datensatz anzulegen (siehe loadData()) — der echte,
+  // erste Login sollte deshalb über die lokale Version erfolgen, deren
+  // defaultData() die echten Werte enthält. Ab dem ersten bestehenden
+  // Firestore-Dokument ist diese Funktion hier bedeutungslos.
   const objektId = "beispielobjekt";
   return {
     objekte: [
@@ -498,42 +577,55 @@ function defaultData() {
   };
 }
 
-let DATA = loadData();
+// DATA wird erst nach erfolgreichem Login gesetzt (siehe Auth-Gate ganz
+// unten im Script). Bis dahin ist es undefined -- alle render*()-Funktionen
+// werden vor dem ersten erfolgreichen Login nicht aufgerufen.
+let DATA;
 
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Fehlende neue Felder bei älteren Objekten nachrüsten
-      parsed.objekte.forEach(o => {
-        if (o.bildUrl === undefined) o.bildUrl = "";
-        if (o.kartenAdresse === undefined) o.kartenAdresse = "";
-        if (o.darlehenssumme === undefined) o.darlehenssumme = null;
-        if (o.zinssatz === undefined) o.zinssatz = null;
-        if (o.tilgungssatz === undefined) o.tilgungssatz = null;
-        if (o.kreditstart === undefined) o.kreditstart = null;
-        if (o.bodenrichtwert === undefined) o.bodenrichtwert = 0;
-        if (o.liegenschaftszins === undefined) o.liegenschaftszins = 3.5;
-        if (o.restnutzungsdauer === undefined) o.restnutzungsdauer = 25;
-        if (o.nachhaltigeMieteProzent === undefined) o.nachhaltigeMieteProzent = 90;
-        if (o.belwertBewirtschaftungProzent === undefined) o.belwertBewirtschaftungProzent = 23;
-        if (o.belwertZinsZuschlag === undefined) o.belwertZinsZuschlag = 0.5;
-        if (o.belwertSicherheitsabschlagProzent === undefined) o.belwertSicherheitsabschlagProzent = 15;
-      });
-      if (parsed.fahrzeuge === undefined) parsed.fahrzeuge = [];
-      return parsed;
-    }
-  } catch (e) { console.warn("localStorage nicht lesbar:", e); }
-  return defaultData();
+function normalizeData(parsed) {
+  // Fehlende neue Felder bei älteren Datenständen nachrüsten.
+  parsed.objekte.forEach(o => {
+    if (o.bildUrl === undefined) o.bildUrl = "";
+    if (o.kartenAdresse === undefined) o.kartenAdresse = "";
+    if (o.darlehenssumme === undefined) o.darlehenssumme = null;
+    if (o.zinssatz === undefined) o.zinssatz = null;
+    if (o.tilgungssatz === undefined) o.tilgungssatz = null;
+    if (o.kreditstart === undefined) o.kreditstart = null;
+    if (o.bodenrichtwert === undefined) o.bodenrichtwert = 0;
+    if (o.liegenschaftszins === undefined) o.liegenschaftszins = 3.5;
+    if (o.restnutzungsdauer === undefined) o.restnutzungsdauer = 25;
+    if (o.nachhaltigeMieteProzent === undefined) o.nachhaltigeMieteProzent = 90;
+    if (o.belwertBewirtschaftungProzent === undefined) o.belwertBewirtschaftungProzent = 23;
+    if (o.belwertZinsZuschlag === undefined) o.belwertZinsZuschlag = 0.5;
+    if (o.belwertSicherheitsabschlagProzent === undefined) o.belwertSicherheitsabschlagProzent = 15;
+  });
+  if (parsed.fahrzeuge === undefined) parsed.fahrzeuge = [];
+  return parsed;
 }
 
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-  } catch (e) {
-    alert("Konnte nicht lokal gespeichert werden (localStorage voll oder nicht verfügbar). Bitte über 'Daten' > Export sichern. Große Fotos als Datei-Upload können den Speicher schnell füllen — im Zweifel Bild-URL statt Upload nutzen.");
+// Lädt den gemeinsamen Datensatz aus Firestore. Existiert er noch nicht
+// (allererster Login überhaupt), wird er mit defaultData() angelegt --
+// ab dann ist Firestore die alleinige Quelle der Wahrheit, für jeden
+// angemeldeten Nutzer gleich (Mac, Handy, Kollegen).
+async function loadData() {
+  const snap = await SHARED_DOC.get();
+  if (snap.exists) {
+    return normalizeData(snap.data());
   }
+  const initial = defaultData();
+  await SHARED_DOC.set(initial);
+  return initial;
+}
+
+// Schreibt NICHT blockierend (UI reagiert sofort über renderAll()), damit
+// sich am Verhalten der 15 bestehenden "saveData(); renderAll();"-Aufrufe
+// im restlichen Code nichts ändern muss. Fehler beim Schreiben werden erst
+// im Nachhinein gemeldet, nicht die UI blockierend.
+function saveData() {
+  SHARED_DOC.set(DATA).catch(err => {
+    console.error("Firestore-Speichern fehlgeschlagen:", err);
+    alert("Änderung konnte nicht gespeichert werden (keine Verbindung?). Bitte Internetverbindung prüfen und die letzte Änderung ggf. wiederholen.");
+  });
 }
 
 function fmtEUR(n) {
@@ -1907,12 +1999,11 @@ function renderDaten() {
     <div class="card">
       <h2>Daten sichern &amp; übertragen</h2>
       <p class="note">
-        Die App speichert alles lokal im Browser (localStorage). Das reicht für den täglichen Gebrauch,
-        ist aber an diesen einen Browser auf diesem Rechner gebunden — bei Browser-Wechsel, Cache-Löschung
-        oder einem neuen Rechner ist es weg, wenn du nicht vorher exportierst.
-        Am besten regelmäßig exportieren und die Datei z. B. im Vault-Ordner ablegen.
-        Hochgeladene Fotos werden direkt in diesen Daten mitgespeichert — bei vielen/großen Bildern kann
-        der Browser-Speicher knapp werden; im Zweifel lieber eine Bild-URL statt Datei-Upload verwenden.
+        Die App speichert alle Daten zentral in der Cloud (Firestore) — derselbe Stand ist automatisch
+        auf jedem Gerät sichtbar, auf dem du dich anmeldest (Mac, Handy, später ggf. weitere Nutzer).
+        Trotzdem empfiehlt sich ein regelmäßiger Export als zusätzliches Backup, z. B. im Vault-Ordner
+        abgelegt. Hochgeladene Fotos werden direkt in diesen Daten mitgespeichert — bei vielen/großen
+        Bildern im Zweifel lieber eine Bild-URL statt Datei-Upload verwenden.
       </p>
       <div class="toolbar">
         <button class="primary" onclick="exportData()">⬇️ Als JSON exportieren</button>
@@ -2157,7 +2248,62 @@ document.querySelectorAll("nav.tabs button").forEach(btn => {
   });
 });
 
-renderAll();
+// ============================================================
+// LOGIN-GATE (Firebase Authentication)
+// ============================================================
+// Die Seite selbst ist öffentlich erreichbar (statischer Link) -- aber
+// ohne gültigen Login bei Firebase zeigt sie nur den Login-Screen, nie
+// echte Daten. Jeder mit einem von dir angelegten Firebase-Nutzerkonto
+// (du selbst, später ggf. Angestellte) kann sich anmelden.
+const loginScreen = document.getElementById("login-screen");
+const appShell = document.getElementById("app-shell");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginSubmit = document.getElementById("login-submit");
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginError.textContent = "";
+  loginSubmit.disabled = true;
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged unten übernimmt den Rest (Daten laden, App zeigen).
+  } catch (err) {
+    loginError.textContent = "Anmeldung fehlgeschlagen — E-Mail oder Passwort falsch.";
+    console.error("Login fehlgeschlagen:", err);
+  } finally {
+    loginSubmit.disabled = false;
+  }
+});
+
+document.getElementById("logout-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  auth.signOut();
+});
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    document.getElementById("sidebar-user-email").textContent = user.email;
+    try {
+      DATA = await loadData();
+    } catch (err) {
+      console.error("Daten konnten nicht geladen werden:", err);
+      loginScreen.style.display = "flex";
+      appShell.style.display = "none";
+      loginError.textContent = "Angemeldet, aber Daten konnten nicht geladen werden. Internetverbindung prüfen und Seite neu laden.";
+      return;
+    }
+    loginScreen.style.display = "none";
+    appShell.style.display = "";
+    renderAll();
+  } else {
+    loginScreen.style.display = "flex";
+    appShell.style.display = "none";
+    loginForm.reset();
+  }
+});
 </script>
 </body>
 </html>
