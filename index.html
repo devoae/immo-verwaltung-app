@@ -493,10 +493,20 @@ const firebaseConfig = {
   messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
   appId: "FIREBASE_APP_ID"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const SHARED_DOC = db.collection("immoApp").doc("sharedData");
+// Solange die Werte oben noch Platzhalter sind (Firebase-Einrichtung nicht
+// abgeschlossen), läuft die App im alten, einfachen Modus (localStorage,
+// kein zusätzlicher Login) -- damit ist sie immer sofort nutzbar, auch
+// wenn die Cloud-Einrichtung noch nicht steht oder mal nicht erreichbar
+// ist. Sobald echte Werte eingetragen sind, schaltet es automatisch auf
+// den Firebase-Modus (Login + geräteübergreifender Datenstand) um.
+const FIREBASE_CONFIGURED = firebaseConfig.apiKey !== "FIREBASE_API_KEY";
+let auth, db, SHARED_DOC;
+if (FIREBASE_CONFIGURED) {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  SHARED_DOC = db.collection("immoApp").doc("sharedData");
+}
 
 const STORAGE_KEY = "immobilien_app_data_v2";
 
@@ -527,12 +537,9 @@ function uid() { return Math.random().toString(36).slice(2, 10); }
 
 function defaultData() {
   // Öffentliche Quelle (GitHub Pages) — bewusst NUR erfundene
-  // Beispielwerte, keine echten Objekt-/Finanz-/Personendaten. Diese
-  // Funktion wird ohnehin nur beim allerersten Login überhaupt verwendet,
-  // um den Firestore-Datensatz anzulegen (siehe loadData()) — der echte,
-  // erste Login sollte deshalb über die lokale Version erfolgen, deren
-  // defaultData() die echten Werte enthält. Ab dem ersten bestehenden
-  // Firestore-Dokument ist diese Funktion hier bedeutungslos.
+  // Beispielwerte. Besonders wichtig solange FIREBASE_CONFIGURED false
+  // ist: in diesem Fall läuft die Seite im lokalen Rückfallmodus OHNE
+  // Login-Schutz, zeigt also diese Werte direkt jedem Besucher.
   const objektId = "beispielobjekt";
   return {
     objekte: [
@@ -603,11 +610,27 @@ function normalizeData(parsed) {
   return parsed;
 }
 
-// Lädt den gemeinsamen Datensatz aus Firestore. Existiert er noch nicht
-// (allererster Login überhaupt), wird er mit defaultData() angelegt --
-// ab dann ist Firestore die alleinige Quelle der Wahrheit, für jeden
-// angemeldeten Nutzer gleich (Mac, Handy, Kollegen).
-async function loadData() {
+// --- Lokaler Modus (localStorage) -- aktiv solange FIREBASE_CONFIGURED
+// false ist, siehe oben. ---------------------------------------------------
+function loadDataLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return normalizeData(JSON.parse(raw));
+  } catch (e) { console.warn("localStorage nicht lesbar:", e); }
+  return defaultData();
+}
+function saveDataLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  } catch (e) {
+    alert("Konnte nicht lokal gespeichert werden (localStorage voll oder nicht verfügbar). Bitte über 'Daten' > Export sichern.");
+  }
+}
+
+// --- Cloud-Modus (Firestore) -- aktiv sobald FIREBASE_CONFIGURED true ist.
+// Lädt/legt den gemeinsamen Datensatz an; jeder angemeldete Nutzer sieht
+// denselben Stand (Mac, Handy, Kollegen). ----------------------------------
+async function loadDataFirestore() {
   const snap = await SHARED_DOC.get();
   if (snap.exists) {
     return normalizeData(snap.data());
@@ -616,16 +639,20 @@ async function loadData() {
   await SHARED_DOC.set(initial);
   return initial;
 }
-
-// Schreibt NICHT blockierend (UI reagiert sofort über renderAll()), damit
-// sich am Verhalten der 15 bestehenden "saveData(); renderAll();"-Aufrufe
-// im restlichen Code nichts ändern muss. Fehler beim Schreiben werden erst
-// im Nachhinein gemeldet, nicht die UI blockierend.
-function saveData() {
+function saveDataFirestore() {
   SHARED_DOC.set(DATA).catch(err => {
     console.error("Firestore-Speichern fehlgeschlagen:", err);
     alert("Änderung konnte nicht gespeichert werden (keine Verbindung?). Bitte Internetverbindung prüfen und die letzte Änderung ggf. wiederholen.");
   });
+}
+
+// --- Einheitliche Schnittstelle, die der Rest der App (15 bestehende
+// "saveData(); renderAll();"-Aufrufe) unverändert weiter benutzt. ---------
+async function loadData() {
+  return FIREBASE_CONFIGURED ? await loadDataFirestore() : loadDataLocal();
+}
+function saveData() {
+  if (FIREBASE_CONFIGURED) saveDataFirestore(); else saveDataLocal();
 }
 
 function fmtEUR(n) {
@@ -2249,61 +2276,74 @@ document.querySelectorAll("nav.tabs button").forEach(btn => {
 });
 
 // ============================================================
-// LOGIN-GATE (Firebase Authentication)
+// START: entweder Firebase-Login-Gate oder sofortiger lokaler Modus
 // ============================================================
-// Die Seite selbst ist öffentlich erreichbar (statischer Link) -- aber
-// ohne gültigen Login bei Firebase zeigt sie nur den Login-Screen, nie
-// echte Daten. Jeder mit einem von dir angelegten Firebase-Nutzerkonto
-// (du selbst, später ggf. Angestellte) kann sich anmelden.
 const loginScreen = document.getElementById("login-screen");
 const appShell = document.getElementById("app-shell");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginSubmit = document.getElementById("login-submit");
+const sidebarFoot = document.querySelector(".sidebar-foot");
 
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  loginError.textContent = "";
-  loginSubmit.disabled = true;
-  const email = document.getElementById("login-email").value.trim();
-  const password = document.getElementById("login-password").value;
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    // onAuthStateChanged unten übernimmt den Rest (Daten laden, App zeigen).
-  } catch (err) {
-    loginError.textContent = "Anmeldung fehlgeschlagen — E-Mail oder Passwort falsch.";
-    console.error("Login fehlgeschlagen:", err);
-  } finally {
-    loginSubmit.disabled = false;
-  }
-});
-
-document.getElementById("logout-link").addEventListener("click", (e) => {
-  e.preventDefault();
-  auth.signOut();
-});
-
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    document.getElementById("sidebar-user-email").textContent = user.email;
+if (!FIREBASE_CONFIGURED) {
+  // Firebase noch nicht eingerichtet -- App läuft sofort im lokalen Modus,
+  // kein Login nötig (nur der vorgelagerte Basic-Auth-Schutz des Servers).
+  // So bleibt die App immer nutzbar, unabhängig davon, wie weit die
+  // Cloud-Einrichtung gerade ist.
+  loginScreen.style.display = "none";
+  appShell.style.display = "";
+  sidebarFoot.innerHTML = "Lokaler Modus<br>(Cloud-Sync noch nicht eingerichtet)";
+  DATA = loadDataLocal();
+  renderAll();
+} else {
+  // Die Seite selbst ist öffentlich erreichbar (statischer Link) -- aber
+  // ohne gültigen Login bei Firebase zeigt sie nur den Login-Screen, nie
+  // echte Daten. Jeder mit einem von dir angelegten Firebase-Nutzerkonto
+  // (du selbst, später ggf. Angestellte) kann sich anmelden.
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loginError.textContent = "";
+    loginSubmit.disabled = true;
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
     try {
-      DATA = await loadData();
+      await auth.signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged unten übernimmt den Rest (Daten laden, App zeigen).
     } catch (err) {
-      console.error("Daten konnten nicht geladen werden:", err);
+      loginError.textContent = "Anmeldung fehlgeschlagen — E-Mail oder Passwort falsch.";
+      console.error("Login fehlgeschlagen:", err);
+    } finally {
+      loginSubmit.disabled = false;
+    }
+  });
+
+  document.getElementById("logout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    auth.signOut();
+  });
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      document.getElementById("sidebar-user-email").textContent = user.email;
+      try {
+        DATA = await loadData();
+      } catch (err) {
+        console.error("Daten konnten nicht geladen werden:", err);
+        loginScreen.style.display = "flex";
+        appShell.style.display = "none";
+        loginError.textContent = "Angemeldet, aber Daten konnten nicht geladen werden. Internetverbindung prüfen und Seite neu laden.";
+        return;
+      }
+      loginScreen.style.display = "none";
+      appShell.style.display = "";
+      renderAll();
+    } else {
       loginScreen.style.display = "flex";
       appShell.style.display = "none";
-      loginError.textContent = "Angemeldet, aber Daten konnten nicht geladen werden. Internetverbindung prüfen und Seite neu laden.";
-      return;
+      loginForm.reset();
     }
-    loginScreen.style.display = "none";
-    appShell.style.display = "";
-    renderAll();
-  } else {
-    loginScreen.style.display = "flex";
-    appShell.style.display = "none";
-    loginForm.reset();
-  }
-});
+  });
+}
 </script>
 </body>
 </html>
