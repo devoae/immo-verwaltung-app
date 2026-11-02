@@ -1,11 +1,11 @@
 # Immobilien-Verwaltung — App
 
-Lokale Web-App zur Verwaltung von Immobilien: Gebäudedaten, Mieteinnahmen, Kosten, Finanzierung/Vermögensaufbau und Marktwert/Beleihungswert.
+Web-App zur Verwaltung von Immobilien: Gebäudedaten, Mieteinnahmen, Kosten, Finanzierung/Vermögensaufbau und Marktwert/Beleihungswert.
 
-**Läuft komplett im Browser**, keine Installation, kein eigener Server. Alle Daten werden ausschließlich lokal im Browser gespeichert (`localStorage`) — nichts wird irgendwohin übertragen oder gespeichert, auch nicht auf GitHub.
+**Login erforderlich.** Die Seite selbst ist öffentlich erreichbar, zeigt aber ohne gültige Anmeldung (Firebase Authentication) nur den Login-Screen, nie echte Daten. Zugänge werden über die Firebase Console verwaltet (für Devran und ggf. Mitarbeiter).
 
-Diese Version enthält bewusst nur erfundene Beispieldaten (keine echten Objekt-, Finanz- oder Personendaten) — zum Ausprobieren der Funktionen. Eigene Daten können direkt in der App eingetragen werden und bleiben nur im eigenen Browser.
+Alle Daten liegen zentral in der Cloud (Firestore) — derselbe Stand ist auf jedem Gerät sichtbar, auf dem man sich anmeldet.
 
 ## Nutzung
 
-Seite öffnen, loslegen. Export/Import über den Tab "⚙️ Daten" für ein eigenes Backup als JSON-Datei.
+Mit E-Mail + Passwort anmelden. Export/Import über den Tab "⚙️ Daten" für ein zusätzliches lokales Backup als JSON-Datei.
