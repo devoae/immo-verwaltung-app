@@ -10,7 +10,7 @@
 <style>
   :root {
     --bg: #ffffff;
-    --bg-elevated: #f7f7f7;
+    --bg-elevated: #f3f3f6;
     --sidebar: #ffffff;
     --card: #ffffff;
     --card-hover: #f7f7f7;
@@ -29,11 +29,20 @@
     --red: #c13515;
     --red-tint: rgba(193,53,21,.08);
     --yellow: #e0a823;
-    --radius-lg: 14px;
-    --radius-md: 10px;
-    --radius-sm: 8px;
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
     --shadow-card: 0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.05);
     --shadow-pop: 0 1px 2px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.08);
+    /* ---- Dashboard-Look aus dem TikTok-Referenzvideo ("Dashboard V18"):
+       schwebende dunkle Sidebar, helles Grau als Grundfläche, lila-pinker
+       Verlauf als Blickfang-Element. ---- */
+    --sidebar-dark: #161616;
+    --sidebar-dark-hover: rgba(255,255,255,.07);
+    --sidebar-dark-active: rgba(255,255,255,.14);
+    --sidebar-dark-text: rgba(255,255,255,.52);
+    --sidebar-dark-text-active: #ffffff;
+    --grad-hero: linear-gradient(135deg, #c7b6fb 0%, #f3b4d6 55%, #fbd0e4 100%);
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -50,37 +59,43 @@
   .app-shell { display: flex; min-height: 100vh; }
 
   /* ---------- SIDEBAR ---------- */
+  /* Dunkle, schwebende Pille statt weißer Vollhöhen-Leiste -- orientiert
+     am "Dashboard V18"-Referenzvideo (schwarze abgerundete Nav-Leiste,
+     heller Arbeitsbereich daneben). */
   .sidebar {
-    width: 260px;
+    width: 248px;
     flex-shrink: 0;
-    background: var(--sidebar);
-    border-right: 1px solid var(--card-border-soft);
-    padding: 32px 20px;
+    background: var(--sidebar-dark);
+    border-right: none;
+    border-radius: 26px;
+    margin: 18px 0 18px 18px;
+    padding: 26px 16px;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 18px;
+    height: calc(100vh - 36px);
     display: flex;
     flex-direction: column;
+    box-shadow: 0 14px 34px rgba(0,0,0,.2);
   }
-  .brand { display: flex; align-items: center; gap: 13px; padding: 0 2px 22px; }
+  .brand { display: flex; align-items: center; gap: 13px; padding: 0 6px 22px; }
   .brand .mark {
-    width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
-    border: 1px solid var(--card-border);
-    background: var(--bg-elevated);
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
     display: flex; align-items: center; justify-content: center;
   }
   .brand .mark svg { display: block; }
-  .brand .name { font-weight: 700; font-size: 15px; letter-spacing: 0; line-height: 1.25; color: var(--text); font-family: "Fraunces", serif; }
-  .brand .name small { display:block; font-weight: 500; font-size: 10.5px; color: var(--muted); letter-spacing: .03em; margin-top: 4px; font-family: "Inter", sans-serif; }
-  .brand-divider { height: 1px; background: var(--card-border-soft); margin: 0 2px 22px; }
+  .brand .name { font-weight: 700; font-size: 15px; letter-spacing: 0; line-height: 1.25; color: #fff; font-family: "Fraunces", serif; }
+  .brand .name small { display:block; font-weight: 500; font-size: 10.5px; color: rgba(255,255,255,.4); letter-spacing: .03em; margin-top: 4px; font-family: "Inter", sans-serif; }
+  .brand-divider { height: 1px; background: rgba(255,255,255,.1); margin: 0 6px 22px; }
 
-  nav.tabs { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+  nav.tabs { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
   nav.tabs button {
     display: flex; align-items: center; gap: 13px;
     background: none; border: none; text-align: left;
-    color: var(--muted);
+    color: var(--sidebar-dark-text);
     padding: 11px 14px;
-    border-radius: var(--radius-sm);
+    border-radius: 14px;
     cursor: pointer;
     font-size: 13.5px;
     font-family: inherit;
@@ -89,16 +104,16 @@
     position: relative;
     transition: color .15s ease, background .15s ease;
   }
-  nav.tabs button .ico { font-size: 15px; width: 16px; text-align: center; opacity: .7; }
-  nav.tabs button:hover { color: var(--text); background: var(--card-hover); }
+  nav.tabs button .ico { font-size: 15px; width: 16px; text-align: center; opacity: .85; }
+  nav.tabs button:hover { color: var(--sidebar-dark-text-active); background: var(--sidebar-dark-hover); }
   nav.tabs button.active {
-    color: var(--accent-strong);
-    background: var(--accent-tint);
+    color: var(--sidebar-dark-text-active);
+    background: var(--sidebar-dark-active);
   }
   nav.tabs button.active .ico { opacity: 1; }
   .sidebar-foot {
-    margin-top: auto; padding: 18px 2px 4px; font-size: 11px; color: var(--muted-dim);
-    border-top: 1px solid var(--card-border-soft); line-height: 1.8; letter-spacing: 0;
+    margin-top: auto; padding: 18px 6px 4px; font-size: 11px; color: rgba(255,255,255,.3);
+    border-top: 1px solid rgba(255,255,255,.1); line-height: 1.8; letter-spacing: 0;
   }
 
   /* ---------- MAIN ---------- */
@@ -191,8 +206,41 @@
   .kpi .value.green { color: var(--green); }
   .kpi .value.red { color: var(--red); }
   .kpi .sub-note { font-size: 11px; color: var(--muted-dim); margin-top: 7px; letter-spacing: 0; }
-  .kpi.hero { background: var(--accent-tint); border-color: var(--accent-dim); }
-  .kpi.hero:hover { border-color: var(--accent-dim); }
+  /* Die wichtigste Kennzahl bekommt den lila-pinken Verlauf aus dem
+     Referenzvideo statt des alten rosa Tints -- hebt sie als "Blickfang"-
+     Kachel ab, genau wie die farbigen Stat-Kacheln im Video. */
+  .kpi.hero { background: var(--grad-hero); border-color: transparent; }
+  .kpi.hero:hover { border-color: transparent; }
+  .kpi.hero .label { color: rgba(0,0,0,.55); }
+  .kpi.hero .sub-note { color: rgba(0,0,0,.45); }
+
+  /* ---------- Begrüßungs-Karte (Dashboard) ---------- */
+  .hero-banner {
+    position: relative;
+    background: var(--grad-hero);
+    border-radius: var(--radius-lg);
+    padding: 30px 34px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    min-height: 100px;
+  }
+  .hero-banner .hero-eyebrow {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: rgba(0,0,0,.5); margin-bottom: 6px;
+  }
+  .hero-banner .hero-title {
+    font-size: 23px; font-weight: 700; color: #2c0a33; font-family: "Fraunces", serif; letter-spacing: 0;
+  }
+  .hero-banner .hero-blob {
+    position: absolute; right: -50px; top: -60px; width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 32%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%);
+  }
+  .hero-banner .hero-blob.b2 {
+    right: 60px; top: auto; bottom: -70px; width: 140px; height: 140px;
+    background: radial-gradient(circle at 60% 60%, rgba(255,255,255,.4), rgba(255,255,255,0) 70%);
+  }
 
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--card-border-soft); }
@@ -241,7 +289,7 @@
     color: #fff;
     border: 1px solid var(--accent);
     padding: 11px 22px;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     font-weight: 600;
     cursor: pointer;
     font-size: 13.5px;
@@ -256,7 +304,7 @@
     border: 1px solid var(--card-border);
     color: var(--text);
     padding: 10px 18px;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     cursor: pointer;
     font-size: 13px;
     font-family: inherit;
@@ -270,7 +318,7 @@
     border: 1px solid var(--card-border);
     color: var(--red);
     padding: 6px 13px;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     cursor: pointer;
     font-size: 12px;
     font-family: inherit;
@@ -355,11 +403,11 @@
   @media (max-width: 880px) {
     .value-split { grid-template-columns: 1fr; }
     .app-shell { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: 16px 18px; overflow-x: auto; }
+    .sidebar { width: auto; height: auto; position: relative; flex-direction: row; align-items: center; padding: 14px 16px; margin: 12px; border-radius: 20px; overflow-x: auto; top: 0; }
     .brand { padding: 0 16px 0 0; }
     nav.tabs { flex-direction: row; margin-top: 0; }
     .sidebar-foot { display: none; }
-    .main { padding: 28px 22px 80px; }
+    .main { padding: 10px 22px 80px; }
   }
   #login-screen {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -391,7 +439,7 @@
   #login-form button:hover { background: var(--accent-strong); }
   #login-form button:disabled { opacity: .5; cursor: default; }
   #login-error { font-size: 12px; color: var(--accent-strong); min-height: 16px; margin-top: 2px; }
-  .sidebar-foot a#logout-link { color: var(--muted); text-decoration: underline; }
+  .sidebar-foot a#logout-link { color: rgba(255,255,255,.55); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -1378,6 +1426,14 @@ function renderDashboard() {
   }
 
   html = `
+    <div class="hero-banner">
+      <div class="hero-blob"></div>
+      <div class="hero-blob b2"></div>
+      <div>
+        <div class="hero-eyebrow">Willkommen zurück</div>
+        <div class="hero-title">Alles im Blick, Devran</div>
+      </div>
+    </div>
     <div class="grid-kpi">
       <div class="kpi"><div class="label">Gesamt-Mieteinnahmen (erfasst)</div><div class="value green">${fmtEUR(gesamtEinnahmen)}</div></div>
       <div class="kpi hero"><div class="label">Überschuss vor Steuern gesamt €/Monat</div><div class="value ${gesamtUeberschussVorSteuern >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtUeberschussVorSteuern)}</div></div>
