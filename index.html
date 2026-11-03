@@ -10,7 +10,7 @@
 <style>
   :root {
     --bg: #ffffff;
-    --bg-elevated: #f3f3f6;
+    --bg-elevated: #eeecef;
     --sidebar: #ffffff;
     --card: #ffffff;
     --card-hover: #f7f7f7;
@@ -34,15 +34,22 @@
     --radius-sm: 10px;
     --shadow-card: 0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.05);
     --shadow-pop: 0 1px 2px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.08);
-    /* ---- Dashboard-Look aus dem TikTok-Referenzvideo ("Dashboard V18"):
-       schwebende dunkle Sidebar, helles Grau als Grundfläche, lila-pinker
-       Verlauf als Blickfang-Element. ---- */
-    --sidebar-dark: #161616;
-    --sidebar-dark-hover: rgba(255,255,255,.07);
-    --sidebar-dark-active: rgba(255,255,255,.14);
-    --sidebar-dark-text: rgba(255,255,255,.52);
-    --sidebar-dark-text-active: #ffffff;
-    --grad-hero: linear-gradient(135deg, #c7b6fb 0%, #f3b4d6 55%, #fbd0e4 100%);
+    /* ---- Dashboard-Look aus dem TikTok-Referenzvideo ("Dashboard V18") --
+       Farben per Pixel-Probe direkt aus den Video-Frames gemessen, damit es
+       wirklich 1:1 passt statt nur ähnlich zu sein:
+       - Sidebar-Schwarz:       #141215
+       - Seitenhintergrund:     #eeecef
+       - Verlauf links (lila):  #c9bce7
+       - Verlauf rechts (pink): #f1c8ef
+       - aktiver Icon-Kreis:    #d9d0f2
+       ---- */
+    --sidebar-dark: #141215;
+    --sidebar-dark-hover: rgba(255,255,255,.08);
+    --sidebar-dark-active-circle: #d9d0f2;
+    --sidebar-dark-icon: rgba(255,255,255,.62);
+    --sidebar-dark-icon-active: #1c1430;
+    --grad-hero: linear-gradient(90deg, #c9bce7 0%, #ddccf0 45%, #f1c8ef 100%);
+    --hero-text: #1e1530;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -59,62 +66,87 @@
   .app-shell { display: flex; min-height: 100vh; }
 
   /* ---------- SIDEBAR ---------- */
-  /* Dunkle, schwebende Pille statt weißer Vollhöhen-Leiste -- orientiert
-     am "Dashboard V18"-Referenzvideo (schwarze abgerundete Nav-Leiste,
-     heller Arbeitsbereich daneben). */
+  /* 1:1 am "Dashboard V18"-Referenzvideo: schmale schwarze Stadion-Pille,
+     reine Icons (keine Text-Labels, keine bunten Emojis -- dünne weiße
+     Strich-Icons wie im Video), aktives Icon = heller lila Kreis mit
+     dunklem Icon darin. Beschriftung kommt im Video selbst erst durch
+     ein Tooltip beim Hover -- das bauen wir hier genauso nach. */
   .sidebar {
-    width: 248px;
+    width: 72px;
     flex-shrink: 0;
     background: var(--sidebar-dark);
     border-right: none;
-    border-radius: 26px;
+    border-radius: 999px;
     margin: 18px 0 18px 18px;
-    padding: 26px 16px;
+    padding: 20px 0;
     position: sticky;
     top: 18px;
     height: calc(100vh - 36px);
     display: flex;
     flex-direction: column;
+    align-items: center;
     box-shadow: 0 14px 34px rgba(0,0,0,.2);
   }
-  .brand { display: flex; align-items: center; gap: 13px; padding: 0 6px 22px; }
+  .brand { display: flex; justify-content: center; padding: 2px 0 20px; }
   .brand .mark {
-    width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
+    width: 32px; height: 20px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
   }
   .brand .mark svg { display: block; }
-  .brand .name { font-weight: 700; font-size: 15px; letter-spacing: 0; line-height: 1.25; color: #fff; font-family: "Fraunces", serif; }
-  .brand .name small { display:block; font-weight: 500; font-size: 10.5px; color: rgba(255,255,255,.4); letter-spacing: .03em; margin-top: 4px; font-family: "Inter", sans-serif; }
-  .brand-divider { height: 1px; background: rgba(255,255,255,.1); margin: 0 6px 22px; }
+  .brand .name { display: none; } /* Wortmarke steht nur noch auf der Login-Seite, nicht mehr in der schmalen Pille */
 
-  nav.tabs { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  nav.tabs { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 4px; }
   nav.tabs button {
-    display: flex; align-items: center; gap: 13px;
-    background: none; border: none; text-align: left;
-    color: var(--sidebar-dark-text);
-    padding: 11px 14px;
-    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px;
+    background: none; border: none;
+    color: var(--sidebar-dark-icon);
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 13.5px;
-    font-family: inherit;
-    font-weight: 600;
-    letter-spacing: 0;
     position: relative;
     transition: color .15s ease, background .15s ease;
   }
-  nav.tabs button .ico { font-size: 15px; width: 16px; text-align: center; opacity: .85; }
-  nav.tabs button:hover { color: var(--sidebar-dark-text-active); background: var(--sidebar-dark-hover); }
+  nav.tabs button .ico { display: flex; width: 18px; height: 18px; }
+  nav.tabs button .ico svg, .sidebar-foot button .ico svg { width: 100%; height: 100%; }
+  nav.tabs button:hover { color: #fff; background: var(--sidebar-dark-hover); }
   nav.tabs button.active {
-    color: var(--sidebar-dark-text-active);
-    background: var(--sidebar-dark-active);
+    color: var(--sidebar-dark-icon-active);
+    background: var(--sidebar-dark-active-circle);
   }
-  nav.tabs button.active .ico { opacity: 1; }
-  .sidebar-foot {
-    margin-top: auto; padding: 18px 6px 4px; font-size: 11px; color: rgba(255,255,255,.3);
-    border-top: 1px solid rgba(255,255,255,.1); line-height: 1.8; letter-spacing: 0;
+  /* Tooltip beim Hover/Fokus -- genau das Verhalten aus dem Video (dort
+     poppt z.B. "Profile" oder "Cloud" neben dem Icon auf, sobald man
+     draufgeht). Ersetzt die weggefallenen Text-Labels. */
+  nav.tabs button::after {
+    content: attr(data-label);
+    position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+    background: #1c1a1e; color: #fff; font-size: 12px; font-weight: 600; font-family: "Inter", sans-serif;
+    padding: 6px 11px; border-radius: 999px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity .12s ease;
+    box-shadow: var(--shadow-pop);
+    z-index: 20;
   }
+  nav.tabs button:hover::after, nav.tabs button:focus-visible::after { opacity: 1; }
+  /* Abmelden-Icon ganz unten in der Pille -- wie das Exit-Icon am Ende
+     der Sidebar im Referenzvideo. Gleiche Kreis-Mechanik wie oben, nur
+     ohne "aktiv"-Zustand (es ist kein Ansichts-Tab). */
+  .sidebar-foot { margin-top: auto; padding-top: 10px; }
+  .sidebar-foot button {
+    display: flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; background: none; border: none; cursor: pointer;
+    color: var(--sidebar-dark-icon); border-radius: 50%; position: relative;
+    transition: color .15s ease, background .15s ease;
+  }
+  .sidebar-foot button .ico { display: flex; width: 18px; height: 18px; }
+  .sidebar-foot button:hover { color: #fff; background: var(--sidebar-dark-hover); }
+  .sidebar-foot button::after {
+    content: attr(data-label);
+    position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+    background: #1c1a1e; color: #fff; font-size: 12px; font-weight: 600; font-family: "Inter", sans-serif;
+    padding: 6px 11px; border-radius: 999px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity .12s ease;
+    box-shadow: var(--shadow-pop); z-index: 20;
+  }
+  .sidebar-foot button:hover::after, .sidebar-foot button:focus-visible::after { opacity: 1; }
 
   /* ---------- MAIN ---------- */
   .main { flex: 1; min-width: 0; padding: 44px 50px 110px; max-width: 1260px; }
@@ -201,7 +233,25 @@
     transition: box-shadow .15s ease, border-color .15s ease;
   }
   .kpi:hover { border-color: var(--card-border); }
-  .kpi .label { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; font-weight: 600; letter-spacing: 0; }
+  .kpi .label { font-size: 11.5px; color: var(--muted); font-weight: 600; letter-spacing: 0; }
+  /* Icon-Badge vor dem Label -- wie bei den Stat-Kacheln im Referenzvideo
+     (kleines farbiges Quadrat mit Symbol, Label daneben). Bisher nur auf
+     den 5 Übersichts-Kacheln im Dashboard eingesetzt, nicht in jeder
+     einzelnen Kennzahl-Kachel der ganzen App -- das wäre für jede der
+     gut 20 Kennzahlen eine eigene Icon-Entscheidung gewesen, die den
+     Rahmen gesprengt hätte. */
+  .kpi-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .kpi-row .label { margin-bottom: 0; }
+  .kpi-icon {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; line-height: 1;
+  }
+  .kpi-icon.green { background: var(--green-tint); color: var(--green); }
+  .kpi-icon.red { background: var(--red-tint); color: var(--red); }
+  .kpi-icon.purple { background: rgba(139,92,246,.14); color: #6d28d9; }
+  .kpi-icon.gray { background: var(--bg-elevated); color: var(--muted); }
+  .kpi-icon.onhero { background: rgba(0,0,0,.08); color: var(--hero-text); }
   .kpi .value { font-size: 23px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--text); }
   .kpi .value.green { color: var(--green); }
   .kpi .value.red { color: var(--red); }
@@ -214,32 +264,54 @@
   .kpi.hero .label { color: rgba(0,0,0,.55); }
   .kpi.hero .sub-note { color: rgba(0,0,0,.45); }
 
-  /* ---------- Begrüßungs-Karte (Dashboard) ---------- */
+  /* ---------- Begrüßungs-Karte (Dashboard) ----------
+     1:1 am Video: Verlauf horizontal lila -> pink, fette dunkle
+     Überschrift + graue zweizeilige Unterzeile links, schwarzer
+     Pillen-Button rechts daneben, verschwommene lila-pinke "Blüte"
+     rechts im Bild, die über den Kartenrand hinausbleedet. */
   .hero-banner {
     position: relative;
     background: var(--grad-hero);
     border-radius: var(--radius-lg);
-    padding: 30px 34px;
+    padding: 26px 30px;
     margin-bottom: 20px;
     overflow: hidden;
     display: flex;
     align-items: center;
-    min-height: 100px;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 108px;
   }
-  .hero-banner .hero-eyebrow {
-    font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-    color: rgba(0,0,0,.5); margin-bottom: 6px;
-  }
+  .hero-banner .hero-text { position: relative; z-index: 2; }
   .hero-banner .hero-title {
-    font-size: 23px; font-weight: 700; color: #2c0a33; font-family: "Fraunces", serif; letter-spacing: 0;
+    font-size: 21px; font-weight: 700; color: var(--hero-text); font-family: "Inter", sans-serif;
+    letter-spacing: -.01em; margin-bottom: 6px;
   }
-  .hero-banner .hero-blob {
-    position: absolute; right: -50px; top: -60px; width: 200px; height: 200px; border-radius: 50%;
-    background: radial-gradient(circle at 32% 32%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%);
+  .hero-banner .hero-sub {
+    font-size: 13px; color: rgba(30,21,48,.62); line-height: 1.6; max-width: 380px;
   }
-  .hero-banner .hero-blob.b2 {
-    right: 60px; top: auto; bottom: -70px; width: 140px; height: 140px;
-    background: radial-gradient(circle at 60% 60%, rgba(255,255,255,.4), rgba(255,255,255,0) 70%);
+  .hero-banner .hero-btn {
+    position: relative; z-index: 2;
+    display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0;
+    background: #171219; color: #fff; border: none; border-radius: 999px;
+    padding: 10px 20px 10px 12px; font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; white-space: nowrap;
+    transition: background .15s ease;
+  }
+  .hero-banner .hero-btn:hover { background: #2a222f; }
+  .hero-banner .hero-btn .plus {
+    width: 18px; height: 18px; border-radius: 50%; border: 1.4px solid rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1;
+  }
+  .hero-banner .hero-bloom {
+    position: absolute; right: -55px; top: 50%; transform: translateY(-50%);
+    width: 260px; height: 260px; border-radius: 50%; filter: blur(1px);
+    background:
+      radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), transparent 45%),
+      radial-gradient(circle at 60% 65%, rgba(167,139,250,.55), transparent 55%),
+      radial-gradient(circle at 75% 35%, rgba(236,72,153,.35), transparent 55%),
+      radial-gradient(circle at 50% 50%, rgba(139,92,246,.4), transparent 70%);
+    opacity: .85;
   }
 
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -403,10 +475,10 @@
   @media (max-width: 880px) {
     .value-split { grid-template-columns: 1fr; }
     .app-shell { flex-direction: column; }
-    .sidebar { width: auto; height: auto; position: relative; flex-direction: row; align-items: center; padding: 14px 16px; margin: 12px; border-radius: 20px; overflow-x: auto; top: 0; }
-    .brand { padding: 0 16px 0 0; }
+    .sidebar { width: auto; height: auto; position: relative; flex-direction: row; align-items: center; padding: 10px 14px; margin: 12px; border-radius: 999px; overflow-x: auto; top: 0; }
+    .brand { padding: 0 8px 0 2px; }
     nav.tabs { flex-direction: row; margin-top: 0; }
-    .sidebar-foot { display: none; }
+    .sidebar-foot { margin-top: 0; margin-left: 2px; padding-top: 0; }
     .main { padding: 10px 22px 80px; }
   }
   #login-screen {
@@ -439,7 +511,6 @@
   #login-form button:hover { background: var(--accent-strong); }
   #login-form button:disabled { opacity: .5; cursor: default; }
   #login-error { font-size: 12px; color: var(--accent-strong); min-height: 16px; margin-top: 2px; }
-  .sidebar-foot a#logout-link { color: rgba(255,255,255,.55); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -468,35 +539,106 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="mark">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <text x="0" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#B8860B" letter-spacing="-0.5">D</text>
-          <line x1="10.6" y1="4" x2="10.6" y2="18" stroke="#B8860B" stroke-width=".6" opacity=".55"/>
-          <text x="11.5" y="16.5" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="#B8860B" letter-spacing="-0.5">O</text>
+        <!-- Eigene Wortmarke "D·O", direkt weiß auf Schwarz, ohne Box --
+             gleiche Machart wie das Logo im Referenzvideo (Icon sitzt
+             ohne Rahmen oben in der runden Kappe), aber ein fremdes
+             Marken-Logo 1:1 zu kopieren wäre nicht sauber, deswegen
+             bleibt es die eigene Initiale. -->
+        <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+          <text x="0" y="11" font-family="Fraunces, serif" font-size="12" font-weight="600" fill="#ffffff">D</text>
+          <circle cx="11" cy="7" r="1.1" fill="#ffffff" opacity=".55"/>
+          <text x="13" y="11" font-family="Fraunces, serif" font-size="12" font-weight="600" fill="#ffffff">O</text>
         </svg>
       </div>
       <div class="name">D&amp;O Brothers<small>Immobilien · Fahrzeuge</small></div>
     </div>
-    <div class="brand-divider"></div>
 
+    <!-- Reine Strich-Icons statt bunter Emojis -- wie im Video sind es
+         dünne, einfarbige Umriss-Icons, die beim aktiven Tab auf einen
+         hellen Kreis mit dunklem Icon wechseln. Die Beschriftung (früher
+         als Text neben dem Icon) kommt jetzt als Tooltip beim Hover,
+         exakt wie im Video selbst demonstriert ("Profile", "Cloud" o.ä.
+         poppen dort beim Draufgehen auf). -->
     <nav class="tabs">
-      <button data-view="dashboard" class="active"><span class="ico">📊</span>Übersicht</button>
-      <button data-view="objekte"><span class="ico">🏗️</span>Objekte</button>
-      <button data-view="finanzierung"><span class="ico">🏦</span>Finanzierung &amp; Vermögen</button>
-      <button data-view="rechner"><span class="ico">🧮</span>Darlehensrechner</button>
-      <button data-view="wertermittlung"><span class="ico">⚖️</span>Wertermittlung</button>
-      <button data-view="miete"><span class="ico">💶</span>Buchungen</button>
-      <button data-view="autohandel"><span class="ico">🚗</span>Autohandel</button>
-      <button data-view="fahrzeugbewertung"><span class="ico">💰</span>Fahrzeugbewertung</button>
-      <button data-view="daten"><span class="ico">⚙️</span>Daten</button>
+      <button data-view="dashboard" class="active" data-label="Übersicht" title="Übersicht">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="6" height="6" rx="1.5"/><rect x="10" y="2" width="6" height="6" rx="1.5"/>
+          <rect x="2" y="10" width="6" height="6" rx="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5"/>
+        </svg></span>
+      </button>
+      <button data-view="objekte" data-label="Objekte" title="Objekte">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="2" width="12" height="14" rx="1"/>
+          <rect x="5.5" y="5" width="2" height="2"/><rect x="10.5" y="5" width="2" height="2"/>
+          <rect x="5.5" y="9" width="2" height="2"/><rect x="10.5" y="9" width="2" height="2"/>
+          <rect x="7.3" y="12.3" width="3.4" height="3.7"/>
+        </svg></span>
+      </button>
+      <button data-view="finanzierung" data-label="Finanzierung &amp; Vermögen" title="Finanzierung &amp; Vermögen">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2,6.5 9,2 16,6.5"/><line x1="2" y1="6.5" x2="16" y2="6.5"/>
+          <line x1="3.2" y1="6.5" x2="3.2" y2="13.5"/><line x1="7" y1="6.5" x2="7" y2="13.5"/>
+          <line x1="11" y1="6.5" x2="11" y2="13.5"/><line x1="14.8" y1="6.5" x2="14.8" y2="13.5"/>
+          <line x1="2" y1="15" x2="16" y2="15"/>
+        </svg></span>
+      </button>
+      <button data-view="rechner" data-label="Darlehensrechner" title="Darlehensrechner">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="2" width="12" height="14" rx="1.8"/><rect x="5.2" y="4.2" width="7.6" height="3" rx=".6"/>
+          <circle cx="6" cy="10.8" r=".55" fill="currentColor" stroke="none"/><circle cx="9" cy="10.8" r=".55" fill="currentColor" stroke="none"/><circle cx="12" cy="10.8" r=".55" fill="currentColor" stroke="none"/>
+          <circle cx="6" cy="13.4" r=".55" fill="currentColor" stroke="none"/><circle cx="9" cy="13.4" r=".55" fill="currentColor" stroke="none"/><circle cx="12" cy="13.4" r=".55" fill="currentColor" stroke="none"/>
+        </svg></span>
+      </button>
+      <button data-view="wertermittlung" data-label="Wertermittlung" title="Wertermittlung">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="9" y1="2" x2="9" y2="15"/><line x1="3.5" y1="4.2" x2="14.5" y2="4.2"/>
+          <path d="M3.5 4.2 L1.8 8.2 A2.1 2.1 0 0 0 5.2 8.2 Z"/><path d="M14.5 4.2 L12.8 8.2 A2.1 2.1 0 0 0 16.2 8.2 Z"/>
+          <line x1="6" y1="16" x2="12" y2="16"/>
+        </svg></span>
+      </button>
+      <button data-view="miete" data-label="Buchungen" title="Buchungen">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="9" r="6.7"/>
+          <text x="9" y="12.2" font-size="8" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial, sans-serif">€</text>
+        </svg></span>
+      </button>
+      <button data-view="autohandel" data-label="Autohandel" title="Autohandel">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.3 11.2 L3.8 6.8 A1.6 1.6 0 0 1 5.3 5.7 H12.7 A1.6 1.6 0 0 1 14.2 6.8 L15.7 11.2"/>
+          <rect x="1.8" y="11.2" width="14.4" height="3.6" rx="1.2"/>
+          <circle cx="5" cy="14.8" r="1.2" fill="currentColor" stroke="none"/><circle cx="13" cy="14.8" r="1.2" fill="currentColor" stroke="none"/>
+        </svg></span>
+      </button>
+      <button data-view="fahrzeugbewertung" data-label="Fahrzeugbewertung" title="Fahrzeugbewertung">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="9" cy="5.3" rx="6" ry="2.1"/>
+          <path d="M3 5.3 V8.7 A6 2.1 0 0 0 15 8.7 V5.3"/><path d="M3 8.9 V12.3 A6 2.1 0 0 0 15 12.3 V8.9"/>
+        </svg></span>
+      </button>
+      <button data-view="daten" data-label="Daten" title="Daten">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+          <line x1="2.5" y1="5" x2="15.5" y2="5"/><circle cx="11.5" cy="5" r="1.6" fill="currentColor" stroke="none"/>
+          <line x1="2.5" y1="9" x2="15.5" y2="9"/><circle cx="6.5" cy="9" r="1.6" fill="currentColor" stroke="none"/>
+          <line x1="2.5" y1="13" x2="15.5" y2="13"/><circle cx="13" cy="13" r="1.6" fill="currentColor" stroke="none"/>
+        </svg></span>
+      </button>
     </nav>
 
-    <div class="sidebar-foot">Angemeldet als <span id="sidebar-user-email"></span><br><a href="#" id="logout-link">Abmelden</a></div>
+    <div class="sidebar-foot">
+      <span id="sidebar-user-email" style="display:none"></span>
+      <button id="logout-link" data-label="Abmelden" title="Abmelden">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7.5 2.5 H4 A1.3 1.3 0 0 0 2.7 3.8 V14.2 A1.3 1.3 0 0 0 4 15.5 H7.5"/>
+          <line x1="7" y1="9" x2="15.5" y2="9"/><polyline points="12,5.8 15.5,9 12,12.2"/>
+        </svg></span>
+      </button>
+    </div>
   </aside>
 
   <main class="main">
     <div class="page-head">
-      <h1>D&amp;O Brothers</h1>
-      <div class="sub">Immobilien, Fahrzeuge, Finanzierung und Vermögensaufbau — alles an einem Ort.</div>
+      <h1 id="page-title">Übersicht</h1>
+      <div class="sub" id="page-sub">Immobilien, Fahrzeuge, Finanzierung und Vermögensaufbau — alles an einem Ort.</div>
     </div>
 
     <div class="view active" id="view-dashboard"></div>
@@ -1427,19 +1569,19 @@ function renderDashboard() {
 
   html = `
     <div class="hero-banner">
-      <div class="hero-blob"></div>
-      <div class="hero-blob b2"></div>
-      <div>
-        <div class="hero-eyebrow">Willkommen zurück</div>
+      <div class="hero-bloom"></div>
+      <div class="hero-text">
         <div class="hero-title">Alles im Blick, Devran</div>
+        <div class="hero-sub">Mieteinnahmen, Kosten, Finanzierung und Fahrzeuge an einem Ort — live synchronisiert auf allen Geräten.</div>
       </div>
+      <button class="hero-btn" onclick="goToView('objekte')"><span class="plus">+</span> Neues Objekt</button>
     </div>
     <div class="grid-kpi">
-      <div class="kpi"><div class="label">Gesamt-Mieteinnahmen (erfasst)</div><div class="value green">${fmtEUR(gesamtEinnahmen)}</div></div>
-      <div class="kpi hero"><div class="label">Überschuss vor Steuern gesamt €/Monat</div><div class="value ${gesamtUeberschussVorSteuern >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtUeberschussVorSteuern)}</div></div>
-      <div class="kpi"><div class="label">Gesamt-Kosten umlagefähig</div><div class="value">${fmtEUR(gesamtKostenUmlage)}</div></div>
-      <div class="kpi"><div class="label">Gesamt-Kosten eigene Last</div><div class="value red">${fmtEUR(gesamtKostenSelbst)}</div></div>
-      <div class="kpi"><div class="label">Vermögensaufbau gesamt</div><div class="value ${gesamtVermoegen >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtVermoegen)}</div></div>
+      <div class="kpi"><div class="kpi-row"><span class="kpi-icon green">€</span><div class="label">Gesamt-Mieteinnahmen (erfasst)</div></div><div class="value green">${fmtEUR(gesamtEinnahmen)}</div></div>
+      <div class="kpi hero"><div class="kpi-row"><span class="kpi-icon onhero">↗</span><div class="label">Überschuss vor Steuern gesamt €/Monat</div></div><div class="value ${gesamtUeberschussVorSteuern >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtUeberschussVorSteuern)}</div></div>
+      <div class="kpi"><div class="kpi-row"><span class="kpi-icon gray">⟲</span><div class="label">Gesamt-Kosten umlagefähig</div></div><div class="value">${fmtEUR(gesamtKostenUmlage)}</div></div>
+      <div class="kpi"><div class="kpi-row"><span class="kpi-icon red">↓</span><div class="label">Gesamt-Kosten eigene Last</div></div><div class="value red">${fmtEUR(gesamtKostenSelbst)}</div></div>
+      <div class="kpi"><div class="kpi-row"><span class="kpi-icon purple">↑</span><div class="label">Vermögensaufbau gesamt</div></div><div class="value ${gesamtVermoegen >= 0 ? 'green' : 'red'}">${fmtEUR(gesamtVermoegen)}</div></div>
     </div>
     <div class="note" style="margin:-8px 0 20px">„Überschuss vor Steuern" = Soll-Kaltmiete abzüglich der kompletten monatlichen Kreditrate (Zins- und Tilgungsanteil) — das ist, was von der Miete tatsächlich monatlich bei dir ankommt, bevor Einkommensteuer auf die Mieteinnahmen anfällt. Einmalige/nicht wiederkehrende Kosten (Notar, Makler etc.) sind hier bewusst nicht mit eingerechnet, da sie keine laufenden Monatskosten sind.</div>
   ` + html;
@@ -2336,12 +2478,39 @@ function renderAll() {
   renderDaten();
 }
 
+// Seitentitel pro Ansicht -- da die Sidebar jetzt nur noch Icons zeigt
+// (wie im Referenzvideo), bestätigt die Überschrift oben nach jedem Klick
+// in Textform, wo man gerade ist.
+const VIEW_TITLES = {
+  dashboard:          ["Übersicht", "Immobilien, Fahrzeuge, Finanzierung und Vermögensaufbau — alles an einem Ort."],
+  objekte:            ["Objekte", "Alle Immobilien mit Einheiten, Mietern und Eckdaten."],
+  finanzierung:       ["Finanzierung & Vermögen", "Darlehen, Restschuld, Tilgung und Vermögensaufbau je Objekt."],
+  rechner:            ["Darlehensrechner", "Monatsrate, Zins- und Tilgungsanteil für ein Darlehen durchrechnen."],
+  wertermittlung:     ["Wertermittlung", "Markt- und Beleihungswert je Objekt nach hinterlegten Annahmen."],
+  miete:              ["Buchungen", "Mieteinnahmen und Kosten je Objekt erfassen."],
+  autohandel:         ["Autohandel", "Fahrzeugbestand mit Kauf- und Verkaufsdaten."],
+  fahrzeugbewertung:  ["Fahrzeugbewertung", "Aktuellen Marktwert eines Fahrzeugs einschätzen."],
+  daten:              ["Daten", "Export, Import und Datenverwaltung."],
+};
+// Erlaubt Buttons außerhalb der Sidebar (z.B. der "+ Neues Objekt"-Button
+// in der Begrüßungskarte), zu einer Ansicht zu springen, ohne die
+// Klick-Logik der Sidebar-Icons zu duplizieren.
+function goToView(view) {
+  const btn = document.querySelector('nav.tabs button[data-view="' + view + '"]');
+  if (btn) btn.click();
+}
+
 document.querySelectorAll("nav.tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById("view-" + btn.dataset.view).classList.add("active");
+    const t = VIEW_TITLES[btn.dataset.view];
+    if (t) {
+      document.getElementById("page-title").textContent = t[0];
+      document.getElementById("page-sub").textContent = t[1];
+    }
   });
 });
 
@@ -2395,6 +2564,7 @@ if (!FIREBASE_CONFIGURED) {
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       document.getElementById("sidebar-user-email").textContent = user.email;
+      document.getElementById("logout-link").dataset.label = "Abmelden (" + user.email + ")";
       try {
         DATA = await loadData();
       } catch (err) {
