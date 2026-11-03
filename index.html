@@ -528,9 +528,8 @@ function uid() { return Math.random().toString(36).slice(2, 10); }
 
 function defaultData() {
   // Öffentliche Quelle (GitHub Pages) — bewusst NUR erfundene
-  // Beispielwerte. Besonders wichtig solange FIREBASE_CONFIGURED false
-  // ist: in diesem Fall läuft die Seite im lokalen Rückfallmodus OHNE
-  // Login-Schutz, zeigt also diese Werte direkt jedem Besucher.
+  // Beispielwerte. Wird seit Firebase-Einrichtung nur noch beim
+  // theoretischen Fall eines leeren Firestore-Dokuments verwendet.
   const objektId = "beispielobjekt";
   return {
     objekte: [
@@ -635,6 +634,30 @@ function saveDataFirestore() {
     console.error("Firestore-Speichern fehlgeschlagen:", err);
     alert("Änderung konnte nicht gespeichert werden (keine Verbindung?). Bitte Internetverbindung prüfen und die letzte Änderung ggf. wiederholen.");
   });
+}
+
+// Live-Sync: hält einen offenen Tab automatisch aktuell, wenn auf einem
+// ANDEREN Gerät (Handy, Mac, Kollege) etwas geändert wird -- ohne das
+// müsste man manuell neu laden, um den aktuellen Stand zu sehen.
+let firestoreUnsubscribe = null;
+function startFirestoreListener() {
+  if (firestoreUnsubscribe) firestoreUnsubscribe();
+  firestoreUnsubscribe = SHARED_DOC.onSnapshot((snap) => {
+    if (!snap.exists) return; // wird nur beim allerersten Login angelegt
+    // hasPendingWrites = true heißt: das ist die lokale Bestätigung unserer
+    // EIGENEN gerade erst gesendeten Änderung -- die haben wir schon
+    // gerendert (siehe "saveData(); renderAll();"-Muster), kein erneutes
+    // renderAll() nötig. Nur auf wirklich von außen kommende Änderungen
+    // reagieren.
+    if (snap.metadata.hasPendingWrites) return;
+    DATA = normalizeData(snap.data());
+    renderAll();
+  }, (err) => {
+    console.error("Firestore-Live-Sync fehlgeschlagen:", err);
+  });
+}
+function stopFirestoreListener() {
+  if (firestoreUnsubscribe) { firestoreUnsubscribe(); firestoreUnsubscribe = null; }
 }
 
 // --- Einheitliche Schnittstelle, die der Rest der App (15 bestehende
@@ -2328,7 +2351,9 @@ if (!FIREBASE_CONFIGURED) {
       loginScreen.style.display = "none";
       appShell.style.display = "";
       renderAll();
+      startFirestoreListener();
     } else {
+      stopFirestoreListener();
       loginScreen.style.display = "flex";
       appShell.style.display = "none";
       loginForm.reset();
