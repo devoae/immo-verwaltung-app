@@ -1919,6 +1919,22 @@ async function updateObjekt(ev, objektId) {
   saveData(); renderAll();
 }
 
+// Bearbeiten der laufenden Finanzierung direkt im "Finanzierung &
+// Vermögen"-Tab -- vorher ließ sich das nur über "🏗️ Objekte" ändern,
+// versteckt zwischen 15 anderen Objekt-/Wertermittlungsfeldern. Nur die
+// Finanzierungsfelder selbst, alles andere am Objekt bleibt unberührt.
+function updateFinanzierung(ev, objektId) {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const o = getObjekt(objektId);
+  o.darlehenssumme = f.get("darlehenssumme") ? Number(f.get("darlehenssumme")) : null;
+  o.zinssatz = f.get("zinssatz") ? Number(f.get("zinssatz")) : null;
+  o.tilgungssatz = f.get("tilgungssatz") ? Number(f.get("tilgungssatz")) : null;
+  o.kreditstart = f.get("kreditstart") || null;
+  o.zinsbindungEnde = f.get("zinsbindungEnde") || null;
+  saveData(); renderAll();
+}
+
 function deleteObjekt(id) {
   if (!confirm("Objekt inkl. aller zugehörigen Mieteinnahmen und Kosten wirklich löschen?")) return;
   DATA.objekte = DATA.objekte.filter(o => o.id !== id);
@@ -2046,7 +2062,20 @@ function renderFinanzierung() {
           <tr><th>Jahr</th><th class="num">Gezahlte Zinsen</th><th class="num">Gezahlte Tilgung</th><th class="num">Restschuld Jahresende</th></tr>
           ${amortisationJaehrlich(o).map(r => `<tr><td>${r.jahr}</td><td class="num">${fmtEUR(r.zinsen)}</td><td class="num">${fmtEUR(r.tilgung)}</td><td class="num">${fmtEUR(r.restschuldEnde)}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">Noch keine volle Zahlungsperiode seit Kreditstart.</td></tr>`}
         </table>
-      ` : `<div class="note">Noch keine Finanzierungsdaten hinterlegt — unter "🏗️ Objekte" → "Objektdaten bearbeiten" Darlehenssumme, Zinssatz, Tilgungssatz und Kreditstart eintragen, dann erscheinen hier Restschuld, Tilgungsplan und Vermögensaufbau automatisch.</div>`}
+      ` : `<div class="note">Noch keine Finanzierungsdaten hinterlegt — direkt unten eintragen, dann erscheinen hier Restschuld, Tilgungsplan und Vermögensaufbau automatisch.</div>`}
+
+      <details class="edit-box" style="margin-top:16px">
+        <summary>✏️ Finanzierung bearbeiten</summary>
+        <form class="inline" onsubmit="updateFinanzierung(event,'${o.id}')">
+          <div class="field"><label>Darlehenssumme (€)</label><input name="darlehenssumme" type="number" step="0.01" value="${o.darlehenssumme || ''}"></div>
+          <div class="field"><label>Zinssatz p.a. (%)</label><input name="zinssatz" type="number" step="0.01" value="${o.zinssatz || ''}"></div>
+          <div class="field"><label>Tilgungssatz p.a. (%)</label><input name="tilgungssatz" type="number" step="0.01" value="${o.tilgungssatz || ''}"></div>
+          <div class="field"><label>Kreditstart</label><input name="kreditstart" type="date" value="${o.kreditstart || ''}"></div>
+          <div class="field"><label>Zinsbindung endet am</label><input name="zinsbindungEnde" type="date" value="${o.zinsbindungEnde || ''}"></div>
+          <button class="primary" type="submit">Speichern</button>
+        </form>
+        <div class="note">Zinssatz kenne ich nicht automatisch — trag hier deinen echten Darlehenszins ein (steht im Darlehensvertrag/ESIS-Merkblatt). Weitere Objektdaten (Adresse, Kaufpreis, Wertermittlungs-Annahmen etc.) bleiben unter "🏗️ Objekte" → "Objektdaten bearbeiten".</div>
+      </details>
     </div>`;
   }
 
