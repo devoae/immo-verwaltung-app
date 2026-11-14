@@ -838,6 +838,14 @@ let DATA;
 function normalizeData(parsed) {
   // Fehlende neue Felder bei älteren Datenständen nachrüsten.
   parsed.objekte.forEach(o => {
+    // Fehlende id absichern -- ohne id laufen alle Aktions-Buttons
+    // (bearbeiten/löschen/als verkauft markieren etc.) lautlos ins Leere,
+    // weil der Button-Klick die id als String "undefined" übergibt, das
+    // aber nie zum echten (JS-)undefined-Wert passt. War am 14.11.2026 bei
+    // 7 von 9 Fahrzeugen der Fall (vermutlich durch einen älteren Import
+    // ohne id-Feld) -- hier dauerhaft abgesichert, auch für Objekte/Einheiten.
+    if (!o.id) o.id = uid();
+    (o.einheiten || []).forEach(e => { if (!e.id) e.id = uid(); });
     if (o.bildUrl === undefined) o.bildUrl = "";
     if (o.kartenAdresse === undefined) o.kartenAdresse = "";
     if (o.darlehenssumme === undefined) o.darlehenssumme = null;
@@ -854,6 +862,7 @@ function normalizeData(parsed) {
     if (o.belwertSicherheitsabschlagProzent === undefined) o.belwertSicherheitsabschlagProzent = 15;
   });
   if (parsed.fahrzeuge === undefined) parsed.fahrzeuge = [];
+  parsed.fahrzeuge.forEach(f => { if (!f.id) f.id = uid(); });
   return parsed;
 }
 
