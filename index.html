@@ -400,6 +400,28 @@
   }
   button.danger:hover { background: var(--red-tint); border-color: var(--red-tint); }
 
+  /* Eigenes Eingabe-Fenster statt window.prompt()/confirm() -- native
+     Browser-Dialoge werden von Chrome/Edge nach ein paar Dialogen auf
+     derselben Seite automatisch stumm blockiert ("Verhindern, dass diese
+     Seite weitere Dialogfelder erstellt"), inkl. prompt(), das dann
+     direkt null zurückgibt -- der Klick wirkt dadurch komplett wirkungslos,
+     ohne jede Fehlermeldung. Ein eigenes, im Seiten-DOM lebendes Fenster
+     kann der Browser nicht so blockieren. */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .modal-box {
+    background: var(--card); border: 1px solid var(--card-border-soft);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
+    padding: 26px 28px; width: 100%; max-width: 360px;
+  }
+  .modal-box h3 { font-size: 15px; margin: 0 0 16px; color: var(--text); font-weight: 700; }
+  .modal-box .field { margin-bottom: 14px; }
+  .modal-box .field input { width: 100%; }
+  .modal-box .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
   .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 
   .empty {
@@ -534,6 +556,8 @@
     </form>
   </div>
 </div>
+
+<div id="modal-overlay" class="modal-overlay" style="display:none"></div>
 
 <div class="app-shell" id="app-shell" style="display:none;">
   <aside class="sidebar">
@@ -715,6 +739,48 @@ const NICHT_UMLAGEFAEHIG_DEFAULT = new Set([
 ]);
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
+
+// Eigenes Eingabe-Fenster als Ersatz für window.prompt() -- siehe Hinweis
+// bei .modal-overlay oben: native Dialoge können vom Browser nach
+// mehrfacher Nutzung lautlos blockiert werden. fields: [{name,label,type,value}].
+// Löst mit einem Objekt {name: wert, ...} auf, oder mit null bei Abbrechen.
+function openFieldModal(title, fields) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById("modal-overlay");
+    const fieldsHtml = fields.map(f => `
+      <div class="field">
+        <label>${f.label}</label>
+        <input id="modal-field-${f.name}" type="${f.type || 'text'}" ${f.step ? `step="${f.step}"` : ""} value="${f.value === null || f.value === undefined ? "" : f.value}">
+      </div>`).join("");
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h3>${title}</h3>
+        <form id="modal-form">
+          ${fieldsHtml}
+          <div class="modal-actions">
+            <button type="button" class="ghost" id="modal-cancel">Abbrechen</button>
+            <button type="submit" class="primary">OK</button>
+          </div>
+        </form>
+      </div>`;
+    overlay.style.display = "flex";
+
+    const close = (result) => {
+      overlay.style.display = "none";
+      overlay.innerHTML = "";
+      resolve(result);
+    };
+    overlay.querySelector("#modal-cancel").onclick = () => close(null);
+    overlay.querySelector("#modal-form").onsubmit = (ev) => {
+      ev.preventDefault();
+      const values = {};
+      fields.forEach(f => { values[f.name] = document.getElementById(`modal-field-${f.name}`).value; });
+      close(values);
+    };
+    const firstInput = overlay.querySelector("input");
+    if (firstInput) { firstInput.focus(); firstInput.select(); }
+  });
+}
 
 function defaultData() {
   // Öffentliche Quelle (GitHub Pages) — bewusst NUR erfundene
@@ -2450,16 +2516,17 @@ function cancelEditFahrzeug() {
   renderAutohandel();
 }
 
-function markFahrzeugVerkauft(id) {
+async function markFahrzeugVerkauft(id) {
   const f = DATA.fahrzeuge.find(x => x.id === id);
   if (!f) return;
-  const preis = prompt(`Verkaufspreis für ${f.marke} ${f.modell} (€):`, f.zielpreis || "");
-  if (preis === null) return;
-  const investIst = prompt("Tatsächliche Investition bis zum Verkauf (€):", f.investitionGeplant || 0);
-  if (investIst === null) return;
+  const result = await openFieldModal(`${f.marke} ${f.modell} als verkauft markieren`, [
+    { name: "preis", label: "Verkaufspreis (€)", type: "number", step: "0.01", value: f.zielpreis || "" },
+    { name: "investIst", label: "Tatsächliche Investition bis zum Verkauf (€)", type: "number", step: "0.01", value: f.investitionGeplant || 0 }
+  ]);
+  if (result === null) return;
   f.status = "Verkauft";
-  f.verkaufspreis = Number(preis) || 0;
-  f.investitionIst = Number(investIst) || 0;
+  f.verkaufspreis = Number(result.preis) || 0;
+  f.investitionIst = Number(result.investIst) || 0;
   saveData(); renderAll();
 }
 
