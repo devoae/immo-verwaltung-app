@@ -867,6 +867,7 @@ function normalizeData(parsed) {
     if (o.bodenrichtwert === undefined) o.bodenrichtwert = 0;
     if (o.liegenschaftszins === undefined) o.liegenschaftszins = 3.5;
     if (o.restnutzungsdauer === undefined) o.restnutzungsdauer = 25;
+    if (o.afaNutzungsdauerGutachten === undefined) o.afaNutzungsdauerGutachten = null;
     if (o.nachhaltigeMieteProzent === undefined) o.nachhaltigeMieteProzent = 90;
     if (o.belwertBewirtschaftungProzent === undefined) o.belwertBewirtschaftungProzent = 23;
     if (o.belwertZinsZuschlag === undefined) o.belwertZinsZuschlag = 0.5;
@@ -1793,6 +1794,9 @@ function renderObjekte() {
             <div class="field"><label>Liegenschaftszins (%)</label><input name="liegenschaftszins" type="number" step="0.1" value="${o.liegenschaftszins}"></div>
             <div class="field"><label>Restnutzungsdauer (Jahre)</label><input name="restnutzungsdauer" type="number" value="${o.restnutzungsdauer}"></div>
             <div class="field"><label>Nachhaltige Miete (% Marktmiete)</label><input name="nachhaltigeMieteProzent" type="number" step="1" value="${o.nachhaltigeMieteProzent}"></div>
+            <h3 style="width:100%">Steuerliche AfA (optional)</h3>
+            <div class="field wide"><label>AfA-Nutzungsdauer lt. Gutachten (Jahre, § 7 Abs. 4 Satz 2 EStG)</label><input name="afaNutzungsdauerGutachten" type="number" step="1" min="0" value="${o.afaNutzungsdauerGutachten || ''}" placeholder="leer = Standardsatz nach Baujahr verwenden"></div>
+            <div class="note" style="width:100%; margin-top:-6px">Nur ausfüllen, wenn ein echtes Restnutzungsdauergutachten vorliegt — überschreibt dann im Steuer-Tab den Standard-AfA-Satz (2 %/2,5 %/3 % je nach Baujahr) durch 1 ÷ diese Jahreszahl. Unabhängig vom Feld "Restnutzungsdauer (Jahre)" oben, das nur für die Wertermittlung (Markt-/Beleihungswert) verwendet wird und keine belastbare Gutachten-Zahl ist.</div>
             <div class="field"><label>Bewirtschaftungspauschale Beleihung (%)</label><input name="belwertBewirtschaftungProzent" type="number" step="1" value="${o.belwertBewirtschaftungProzent}"></div>
             <div class="field"><label>Zinszuschlag Beleihung (%-Punkte)</label><input name="belwertZinsZuschlag" type="number" step="0.1" value="${o.belwertZinsZuschlag}"></div>
             <div class="field"><label>Sicherheitsabschlag Beleihung (%)</label><input name="belwertSicherheitsabschlagProzent" type="number" step="1" value="${o.belwertSicherheitsabschlagProzent}"></div>
@@ -1957,6 +1961,7 @@ async function addObjekt(ev) {
     bodenrichtwert: 0,
     liegenschaftszins: 3.5,
     restnutzungsdauer: 25,
+    afaNutzungsdauerGutachten: null,
     nachhaltigeMieteProzent: 90,
     belwertBewirtschaftungProzent: 23,
     belwertZinsZuschlag: 0.5,
@@ -1988,6 +1993,7 @@ async function updateObjekt(ev, objektId) {
   o.bodenrichtwert = Number(f.get("bodenrichtwert")) || 0;
   o.liegenschaftszins = Number(f.get("liegenschaftszins")) || 0;
   o.restnutzungsdauer = Number(f.get("restnutzungsdauer")) || 0;
+  o.afaNutzungsdauerGutachten = f.get("afaNutzungsdauerGutachten") ? Number(f.get("afaNutzungsdauerGutachten")) : null;
   o.nachhaltigeMieteProzent = Number(f.get("nachhaltigeMieteProzent")) || 0;
   o.belwertBewirtschaftungProzent = Number(f.get("belwertBewirtschaftungProzent")) || 0;
   o.belwertZinsZuschlag = Number(f.get("belwertZinsZuschlag")) || 0;
@@ -2686,6 +2692,21 @@ function afaSatzFuerBaujahr(baujahr) {
   return { satz: 0.02, info: "Fertigstellung 1925–2022 → 2 % p.a. (§ 7 Abs. 4 Satz 1 Nr. 2a EStG)" };
 }
 
+// Liegt ein echtes Restnutzungsdauergutachten vor (Feld unter "🏗️ Objekte" →
+// "Steuerliche AfA"), gilt die verkuerzte tatsaechliche Nutzungsdauer statt
+// des Baujahr-Standardsatzes (§ 7 Abs. 4 Satz 2 EStG, vgl. BFH IX R 25/19).
+// Ohne Eintrag bleibt es beim Standardsatz -- diese Funktion aendert also
+// nichts an bestehenden Objekten ohne Gutachten.
+function afaSatzFuerObjekt(o) {
+  if (o.afaNutzungsdauerGutachten && o.afaNutzungsdauerGutachten > 0) {
+    return {
+      satz: 1 / o.afaNutzungsdauerGutachten,
+      info: `Nutzungsdauer lt. Gutachten: ${o.afaNutzungsdauerGutachten} Jahre → verkürzte AfA statt Baujahr-Standardsatz (§ 7 Abs. 4 Satz 2 EStG) -- Gutachten vor Ansatz vom Steuerberater gegenchecken lassen`
+    };
+  }
+  return afaSatzFuerBaujahr(o.baujahr);
+}
+
 function berechneAfaJahr(o, jahr, afaBasisNebenkostenSumme) {
   const mw = berechneMarktwert(o);
   let verhaeltnisGebaeude = mw.marktwert > 0 ? mw.gebaeudeertragswert / mw.marktwert : 0;
@@ -2694,7 +2715,7 @@ function berechneAfaJahr(o, jahr, afaBasisNebenkostenSumme) {
   const kaufpreisAnteil = (o.kaufpreis || 0) * verhaeltnisGebaeude;
   const nebenkostenAnteil = (afaBasisNebenkostenSumme || 0) * verhaeltnisGebaeude;
   const afaBasisGesamt = kaufpreisAnteil + nebenkostenAnteil;
-  const { satz, info } = afaSatzFuerBaujahr(o.baujahr);
+  const { satz, info } = afaSatzFuerObjekt(o);
   const afaJahresbetrag = afaBasisGesamt * satz;
 
   let anteilJahr = 1;
