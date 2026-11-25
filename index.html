@@ -639,6 +639,16 @@
           <path d="M3 5.3 V8.7 A6 2.1 0 0 0 15 8.7 V5.3"/><path d="M3 8.9 V12.3 A6 2.1 0 0 0 15 12.3 V8.9"/>
         </svg></span>
       </button>
+      <button data-view="steuer" data-label="Steuer" title="Steuer">
+        <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="2" width="10" height="14" rx="1.2"/>
+          <line x1="5.3" y1="5.3" x2="10.7" y2="5.3"/>
+          <line x1="5.3" y1="8" x2="10.7" y2="8"/>
+          <line x1="5.3" y1="10.7" x2="8.5" y2="10.7"/>
+          <path d="M11 11.5 L15.5 11.5 L15.5 16 L11 16 Z"/>
+          <text x="13.25" y="14.6" font-size="5.3" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial, sans-serif">%</text>
+        </svg></span>
+      </button>
       <button data-view="daten" data-label="Daten" title="Daten">
         <span class="ico"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
           <line x1="2.5" y1="5" x2="15.5" y2="5"/><circle cx="11.5" cy="5" r="1.6" fill="currentColor" stroke="none"/>
@@ -673,6 +683,7 @@
     <div class="view" id="view-miete"></div>
     <div class="view" id="view-autohandel"></div>
     <div class="view" id="view-fahrzeugbewertung"></div>
+    <div class="view" id="view-steuer"></div>
     <div class="view" id="view-daten"></div>
   </main>
 </div>
@@ -2256,7 +2267,7 @@ function renderBuchungen() {
       return `<tr>
         <td>${fmtDate(b.datum)}</td>
         <td>${o ? o.adresse : "?"}</td>
-        <td><span class="tag green">+ Einnahme</span></td>
+        <td><span class="tag green">+ Einnahme</span>${b.steuerfrei ? ` <span class="tag" style="background:var(--card-border-soft); color:var(--muted)">steuerfrei</span>` : ""}</td>
         <td>${e ? e.name : "–"}</td>
         <td class="num" style="color:var(--green)">+ ${fmtEUR(b.betrag)}</td>
         <td>${b.notiz || ""}</td>
@@ -2296,6 +2307,7 @@ function renderBuchungen() {
         <div class="field"><label>Einheit</label><select name="einheitId" id="miete-einheit-select"></select></div>
         <div class="field"><label>Betrag (€)</label><input name="betrag" type="number" step="0.01" required></div>
         <div class="field wide"><label>Notiz</label><input name="notiz" placeholder="z.B. Kaltmiete Oktober"></div>
+        <div class="field checkbox"><input type="checkbox" name="steuerfrei" id="einnahme-steuerfrei-checkbox"><label for="einnahme-steuerfrei-checkbox">steuerfrei (z.B. PV-Einspeisevergütung)</label></div>
         <button class="primary" type="submit">+ Eintragen</button>
       </form>
 
@@ -2309,7 +2321,7 @@ function renderBuchungen() {
         <div class="field wide"><label>Beleg (Foto/PDF, optional)</label><input name="beleg" type="file" accept="image/*,application/pdf"></div>
         <button class="primary" type="submit">+ Eintragen</button>
       </form>
-      <div class="note">Der Haken bei "umlagefähig" wird je nach Kategorie automatisch vorgeschlagen (BetrKV-Faustregel) — jederzeit selbst umstellbar. Ein angehängter Beleg (Rechnung, Foto) bleibt direkt an der Buchung und wird mit synchronisiert — kein zusätzliches Ablegen nötig.</div>
+      <div class="note">Der Haken bei "umlagefähig" wird je nach Kategorie automatisch vorgeschlagen (BetrKV-Faustregel) — jederzeit selbst umstellbar. Ein angehängter Beleg (Rechnung, Foto) bleibt direkt an der Buchung und wird mit synchronisiert — kein zusätzliches Ablegen nötig. Der Haken "steuerfrei" bei Einnahmen ist für Fälle wie PV-Einspeisevergütung gedacht (seit 2022 nach § 3 Nr. 72 EStG regelmäßig steuerfrei bei Anlagen bis 30 kWp) — diese Einnahmen tauchen dann in der Steuer-Berechnung separat auf, nicht im steuerpflichtigen Vermietungsergebnis.</div>
     </div>
 
     <div class="card">
@@ -2346,7 +2358,8 @@ function addMiete(ev) {
     einheitId: f.get("einheitId") || null,
     datum: f.get("datum"),
     betrag: Number(f.get("betrag")),
-    notiz: f.get("notiz")
+    notiz: f.get("notiz"),
+    steuerfrei: f.get("steuerfrei") === "on"
   });
   saveData(); renderAll();
 }
@@ -2550,9 +2563,6 @@ function deleteFahrzeug(id) {
 // ============================================================
 function renderDaten() {
   const el = document.getElementById("view-daten");
-  const jahre = steuerjahrJahre();
-  const objOptions = `<option value="alle">Alle Objekte</option>` + DATA.objekte.map(o => `<option value="${o.id}">${o.adresse}</option>`).join("");
-  const jahrOptions = jahre.map(j => `<option value="${j}">${j}</option>`).join("");
   el.innerHTML = `
     <div class="card">
       <h2>Daten sichern &amp; übertragen</h2>
@@ -2572,26 +2582,64 @@ function renderDaten() {
     </div>
 
     <div class="card">
+      <h2>Rohdaten (zum Nachschauen)</h2>
+      <pre style="white-space:pre-wrap; font-size:11.5px; color:var(--muted); max-height:400px; overflow:auto;">${JSON.stringify(DATA, null, 2)}</pre>
+    </div>`;
+}
+
+// ============================================================
+// STEUER (AfA, Steuerjahr-Export, Rückerstattungs-Schätzung)
+// ============================================================
+function renderSteuer() {
+  const el = document.getElementById("view-steuer");
+  const jahre = steuerjahrJahre();
+  const objOptions = `<option value="alle">Alle Objekte</option>` + DATA.objekte.map(o => `<option value="${o.id}">${o.adresse}</option>`).join("");
+  const jahrOptions = jahre.map(j => `<option value="${j}">${j}</option>`).join("");
+  el.innerHTML = `
+    <div class="card">
       <h2>📑 Steuerjahr-Export</h2>
       <p class="note" style="margin-top:0">
         Fasst Mieteinnahmen und Kosten eines Jahres je Objekt zusammen — als Vorbereitung für die
         Steuererklärung (Anlage V) bzw. zum Weitergeben an den Steuerberater. <b>Ersetzt keine
         Steuerberatung</b> — insbesondere die mit "zu prüfen" markierten Positionen (z.B. größere
         Sanierungen können je nach Umfang sofort abzugsfähig oder über mehrere Jahre abzuschreiben
-        sein) und die Aufteilung Grundstück/Gebäude für die AfA sind hier bewusst nicht automatisch
-        entschieden.
+        sein). Die Aufteilung Grundstück/Gebäude für die AfA wird unten als Schätzung aus der
+        Wertermittlung (Ertragswertverfahren-Verhältnis) abgeleitet, nicht aus einem Gutachten.
       </p>
+      <p class="note">
+        Diese Berechnung deckt ausschließlich die <b>Vermietungseinkünfte</b> ab. Werbungskosten aus
+        nichtselbständiger Arbeit sowie Autohandel/Uhrenhandel als Nebenprojekte stehen separat in der
+        Vault-Notiz "Finanzen/Steuern" (Gesamtübersicht) — die gehören nicht in diese Immobilien-App.
+      </p>
+      <div class="card" style="box-shadow:none; border:1px solid var(--card-border-soft); margin:0 0 16px">
+        <div class="eyebrow" style="margin-top:0">Steuer-Einstellungen (für die Rückerstattungs-Schätzung)</div>
+        <form class="inline" onsubmit="event.preventDefault(); speichereSteuerEinstellungen();">
+          <div class="field">
+            <label>Zu versteuerndes Einkommen ohne Vermietung (€/Jahr)</label>
+            <input id="steuer-zve" type="number" step="100" value="${DATA.einstellungen && DATA.einstellungen.zvEOhneVermietung != null ? DATA.einstellungen.zvEOhneVermietung : ''}">
+          </div>
+          <div class="field">
+            <label>Veranlagung</label>
+            <select id="steuer-veranlagung">
+              <option value="einzel" ${(!DATA.einstellungen || DATA.einstellungen.veranlagungsart !== "zusammen") ? "selected" : ""}>Einzelveranlagung</option>
+              <option value="zusammen" ${DATA.einstellungen && DATA.einstellungen.veranlagungsart === "zusammen" ? "selected" : ""}>Zusammenveranlagung (Splitting)</option>
+            </select>
+          </div>
+          <button class="primary" type="submit">Speichern</button>
+        </form>
+        <div class="note" style="margin:8px 0 0">
+          Bewusst <b>ohne Soli/Kirchensteuer</b> (nur Einkommensteuer nach § 32a EStG, Eckwerte VZ 2026) —
+          so festgelegt, um die reine Einkommensteuer-Wirkung zu zeigen. Das hier eingetragene Einkommen
+          ist dein sonstiges zu versteuerndes Einkommen OHNE die Vermietungsergebnisse unten — die App
+          rechnet beide Fälle (mit/ohne Vermietungsergebnis) durch und zeigt die Differenz.
+        </div>
+      </div>
       <form class="inline" onsubmit="event.preventDefault(); renderSteuerjahrErgebnis();">
         <div class="field"><label>Objekt</label><select id="steuer-objekt">${objOptions}</select></div>
         <div class="field"><label>Jahr</label><select id="steuer-jahr">${jahrOptions}</select></div>
         <button class="primary" type="submit">Berechnen</button>
       </form>
       <div id="steuerjahr-ergebnis" style="margin-top:18px"></div>
-    </div>
-
-    <div class="card">
-      <h2>Rohdaten (zum Nachschauen)</h2>
-      <pre style="white-space:pre-wrap; font-size:11.5px; color:var(--muted); max-height:400px; overflow:auto;">${JSON.stringify(DATA, null, 2)}</pre>
     </div>`;
   renderSteuerjahrErgebnis();
 }
@@ -2613,9 +2661,113 @@ const STEUER_EINORDNUNG = {
   "Grunderwerbsteuer (Kaufnebenkosten)": "afa",
   "Kreditzinsen": "werbungskosten",
   "Kredittilgung": "nicht_abzugsfaehig",
-  "Mieter-Entschädigung": "werbungskosten",
+  "Mieter-Entschädigung": "pruefen", // Einordnung bewusst ungeklaert: koennte sofort abzugsfaehig oder AfA-Basis sein, siehe Finanzen/Steuern.md 1.5
   "Sonstiges": "werbungskosten"
 };
+
+// ============================================================
+// AfA (Gebäude-Abschreibung) & Einkommensteuer-Rückerstattungs-Schätzung
+// ============================================================
+//
+// AfA-Basis braucht eine Aufteilung Kaufpreis -> Grundstück/Gebäude (nur
+// das Gebäude wird abgeschrieben). Statt das zu raten, nutzen wir das
+// Verhältnis aus der ohnehin schon vorhandenen Wertermittlung
+// (berechneMarktwert/Ertragswertverfahren, ImmoWertV-nah und für
+// vermietete Mehrfamilienhäuser das einschlägige Verfahren): das
+// Verhältnis Gebäudeertragswert : Marktwert aus dieser Schätzung wird auf
+// den TATSÄCHLICHEN Kaufpreis angewendet ("Verhältnismethode", so auch
+// von der BMF-Arbeitshilfe zur Kaufpreisaufteilung vorgesehen). Das ist
+// eine Schätzung auf Basis der selbst gepflegten Bodenrichtwert-/Zins-
+// Annahmen unter "🏗️ Objekte" — kein Gutachten, keine Steuerberatung.
+function afaSatzFuerBaujahr(baujahr) {
+  if (!baujahr) return { satz: 0.02, info: "Baujahr unbekannt — 2 % angenommen (Regelfall § 7 Abs. 4 Nr. 2a EStG)" };
+  if (baujahr >= 2023) return { satz: 0.03, info: "Fertigstellung nach 31.12.2022 → 3 % p.a. (§ 7 Abs. 4 Satz 1 Nr. 2a EStG)" };
+  if (baujahr < 1925) return { satz: 0.025, info: "Fertigstellung vor 1925 → 2,5 % p.a. (§ 7 Abs. 4 Satz 1 Nr. 1 EStG)" };
+  return { satz: 0.02, info: "Fertigstellung 1925–2022 → 2 % p.a. (§ 7 Abs. 4 Satz 1 Nr. 2a EStG)" };
+}
+
+function berechneAfaJahr(o, jahr, afaBasisNebenkostenSumme) {
+  const mw = berechneMarktwert(o);
+  let verhaeltnisGebaeude = mw.marktwert > 0 ? mw.gebaeudeertragswert / mw.marktwert : 0;
+  const unplausibel = !(verhaeltnisGebaeude >= 0 && verhaeltnisGebaeude <= 1);
+  verhaeltnisGebaeude = Math.max(0, Math.min(1, verhaeltnisGebaeude));
+  const kaufpreisAnteil = (o.kaufpreis || 0) * verhaeltnisGebaeude;
+  const nebenkostenAnteil = (afaBasisNebenkostenSumme || 0) * verhaeltnisGebaeude;
+  const afaBasisGesamt = kaufpreisAnteil + nebenkostenAnteil;
+  const { satz, info } = afaSatzFuerBaujahr(o.baujahr);
+  const afaJahresbetrag = afaBasisGesamt * satz;
+
+  let anteilJahr = 1;
+  let hinweisErstjahr = "";
+  if (o.kaufdatum && o.kaufdatum.slice(0, 4) === jahr) {
+    const monatKauf = Number(o.kaufdatum.slice(5, 7));
+    const volleMonate = 12 - monatKauf + 1; // Monat der Anschaffung zählt voll (§ 7 Abs. 1 Satz 4 EStG)
+    anteilJahr = volleMonate / 12;
+    hinweisErstjahr = `Jahr der Anschaffung (${o.kaufdatum}): nur ${volleMonate}/12 Monate angesetzt.`;
+  } else if (o.kaufdatum && jahr < o.kaufdatum.slice(0, 4)) {
+    anteilJahr = 0;
+  }
+  const afaJahr = afaJahresbetrag * anteilJahr;
+  return {
+    verhaeltnisGebaeude, unplausibel, kaufpreisAnteil, nebenkostenAnteil, afaBasisGesamt,
+    afaSatz: satz, afaSatzInfo: info, afaJahresbetrag, anteilJahr, hinweisErstjahr, afaJahr, mw
+  };
+}
+
+// Einkommensteuer-Grundtarif nach § 32a EStG, Eckwerte Veranlagungszeitraum
+// 2026 (Grundfreibetrag 12.348 €). Bewusst OHNE Soli/Kirchensteuer, wie von
+// Devran festgelegt -- reine Einkommensteuer-Wirkung.
+function einkommensteuerGrundtarif(zveRaw) {
+  const zve = Math.max(0, Math.floor(zveRaw || 0));
+  const GFB = 12348;
+  let steuer = 0;
+  if (zve <= GFB) {
+    steuer = 0;
+  } else if (zve <= 17799) {
+    const y = (zve - GFB) / 10000;
+    steuer = (914.51 * y + 1400) * y;
+  } else if (zve <= 69878) {
+    const z = (zve - 17799) / 10000;
+    steuer = (173.10 * z + 2397) * z + 1034.87;
+  } else if (zve <= 277825) {
+    steuer = 0.42 * zve - 11135.63;
+  } else {
+    steuer = 0.45 * zve - 19470.38;
+  }
+  return Math.floor(Math.max(0, steuer));
+}
+function einkommensteuer(zve, veranlagungsart) {
+  if (veranlagungsart === "zusammen") return 2 * einkommensteuerGrundtarif(zve / 2);
+  return einkommensteuerGrundtarif(zve);
+}
+
+// Vergleicht die Steuer mit und ohne das Vermietungsergebnis (Einnahmen -
+// Werbungskosten - AfA) auf Basis des unter "Steuer-Einstellungen"
+// hinterlegten sonstigen zu versteuernden Einkommens. Das ist genauer als
+// ein fixer Grenzsteuersatz, weil es auch Zonenwechsel im Tarif erfasst.
+function berechneSteuerwirkungVermietung(vermietungsergebnis) {
+  const einst = DATA.einstellungen || {};
+  const zvEBasis = Number(einst.zvEOhneVermietung) || 0;
+  const veranlagungsart = einst.veranlagungsart || "einzel";
+  const steuerOhne = einkommensteuer(zvEBasis, veranlagungsart);
+  const steuerMit = einkommensteuer(zvEBasis + vermietungsergebnis, veranlagungsart);
+  const differenz = steuerOhne - steuerMit; // positiv = Rückerstattung/Ersparnis
+  // 1.000-€-Schritt statt 1-€-Schritt, weil die ESt-Beträge auf volle Euro
+  // gerundet werden (§32a-Vorgabe) -- bei nur 1 € Differenz würde die
+  // Rundung das Ergebnis meist auf 0 % verfälschen.
+  const grenzsteuersatzNaeherung = zvEBasis > 0
+    ? (einkommensteuer(zvEBasis + 1000, veranlagungsart) - einkommensteuer(zvEBasis, veranlagungsart)) / 10
+    : null;
+  return { zvEBasis, veranlagungsart, steuerOhne, steuerMit, differenz, grenzsteuersatzNaeherung };
+}
+
+function speichereSteuerEinstellungen() {
+  if (!DATA.einstellungen) DATA.einstellungen = {};
+  DATA.einstellungen.zvEOhneVermietung = Number(document.getElementById("steuer-zve")?.value) || 0;
+  DATA.einstellungen.veranlagungsart = document.getElementById("steuer-veranlagung")?.value || "einzel";
+  saveData();
+  renderSteuerjahrErgebnis();
+}
 
 function steuerjahrJahre() {
   const jahre = new Set();
@@ -2628,9 +2780,12 @@ function steuerjahrJahre() {
 function computeSteuerjahr(objektFilter, jahr) {
   const objekte = objektFilter === "alle" ? DATA.objekte : DATA.objekte.filter(o => o.id === objektFilter);
   return objekte.map(o => {
-    const einnahmen = DATA.mieteinnahmen
-      .filter(m => m.objektId === o.id && (m.datum || "").startsWith(jahr))
-      .reduce((s, m) => s + Number(m.betrag), 0);
+    const einnahmenJahr = DATA.mieteinnahmen.filter(m => m.objektId === o.id && (m.datum || "").startsWith(jahr));
+    const einnahmen = einnahmenJahr.filter(m => !m.steuerfrei).reduce((s, m) => s + Number(m.betrag), 0);
+    // Steuerfreie Einnahmen (z.B. PV-Einspeisevergütung nach § 3 Nr. 72 EStG) fliessen
+    // bewusst NICHT in "einnahmen"/das Vermietungsergebnis ein -- sie werden separat
+    // ausgewiesen, damit die Steuerjahr-Berechnung sie nicht versehentlich mitbesteuert.
+    const einnahmenSteuerfrei = einnahmenJahr.filter(m => m.steuerfrei).reduce((s, m) => s + Number(m.betrag), 0);
     const kostenJahr = DATA.kosten.filter(k => k.objektId === o.id && (k.datum || "").startsWith(jahr));
 
     const gruppen = { werbungskosten: {}, afa: {}, pruefen: {}, nicht_abzugsfaehig: {} };
@@ -2643,11 +2798,14 @@ function computeSteuerjahr(objektFilter, jahr) {
     const afaBasisSumme = summe(gruppen.afa);
     const pruefenSumme = summe(gruppen.pruefen);
     const tilgungSumme = summe(gruppen.nicht_abzugsfaehig);
+    const afaInfo = berechneAfaJahr(o, jahr, afaBasisSumme);
+    const vermietungsergebnisInklAfa = einnahmen - werbungskostenSumme - afaInfo.afaJahr;
 
     return {
-      objekt: o, einnahmen, kostenJahr,
+      objekt: o, einnahmen, einnahmenSteuerfrei, kostenJahr,
       gruppen, werbungskostenSumme, afaBasisSumme, pruefenSumme, tilgungSumme,
-      ueberschuss: einnahmen - werbungskostenSumme
+      ueberschuss: einnahmen - werbungskostenSumme,
+      afaInfo, vermietungsergebnisInklAfa
     };
   });
 }
@@ -2669,14 +2827,21 @@ function renderSteuerjahrErgebnis() {
 
   const kategorieListe = (obj) => Object.entries(obj).map(([k, v]) => `<div>${k}: ${fmtEUR(v)}</div>`).join("") || "<div>–</div>";
 
+  const summeVermietungsergebnis = ergebnisse.reduce((s, r) => s + r.vermietungsergebnisInklAfa, 0);
+  const sw = berechneSteuerwirkungVermietung(summeVermietungsergebnis);
+  letzteSteuerjahrBerechnung.steuerwirkung = sw;
+  letzteSteuerjahrBerechnung.summeVermietungsergebnis = summeVermietungsergebnis;
+
   el.innerHTML = ergebnisse.map(r => `
     <div class="card" style="box-shadow:none; border:1px solid var(--card-border-soft); margin-bottom:14px">
       <h3 style="margin-top:0">${r.objekt.adresse} — ${jahr}</h3>
       <div class="grid-kpi">
-        <div class="kpi"><div class="label">Mieteinnahmen ${jahr}</div><div class="value green">${fmtEUR(r.einnahmen)}</div></div>
+        <div class="kpi"><div class="label">Mieteinnahmen ${jahr} (steuerpflichtig)</div><div class="value green">${fmtEUR(r.einnahmen)}</div></div>
         <div class="kpi"><div class="label">Werbungskosten (sofort abzugsfähig)</div><div class="value red">${fmtEUR(r.werbungskostenSumme)}</div></div>
-        <div class="kpi"><div class="label">Überschuss (vor Steuern)</div><div class="value ${r.ueberschuss >= 0 ? 'green' : 'red'}">${fmtEUR(r.ueberschuss)}</div></div>
+        <div class="kpi"><div class="label">AfA Gebäude (${jahr})</div><div class="value red">${fmtEUR(r.afaInfo.afaJahr)}</div></div>
+        <div class="kpi"><div class="label">Vermietungsergebnis (inkl. AfA)</div><div class="value ${r.vermietungsergebnisInklAfa >= 0 ? 'green' : 'red'}">${fmtEUR(r.vermietungsergebnisInklAfa)}</div></div>
       </div>
+      ${r.einnahmenSteuerfrei ? `<div class="note" style="margin-top:0">Zusätzlich <b>${fmtEUR(r.einnahmenSteuerfrei)} steuerfreie Einnahmen</b> (z.B. PV-Einspeisevergütung, § 3 Nr. 72 EStG) — bewusst nicht im Vermietungsergebnis oben enthalten, da nicht einkommensteuerpflichtig.</div>` : ""}
       <div class="value-split">
         <div class="half">
           <div class="eyebrow">Werbungskosten nach Kategorie</div>
@@ -2688,9 +2853,36 @@ function renderSteuerjahrErgebnis() {
           <div class="per-m2">Kaufpreis Objekt: ${fmtEUR(r.objekt.kaufpreis)} — Aufteilung Grundstück/Gebäude für die AfA noch zu klären.</div>
         </div>
       </div>
+      <div class="warn-note" style="margin-top:12px">
+        <b>AfA-Berechnung (Schätzung):</b>
+        Gebäudeanteil laut Wertermittlung (Ertragswertverfahren) ≈ ${(r.afaInfo.verhaeltnisGebaeude * 100).toFixed(1)} %
+        ${r.afaInfo.unplausibel ? ' <span style="color:var(--red)">(Ertragswertverfahren ergab kein plausibles Verhältnis, auf 0–100 % begrenzt — Bodenrichtwert/Zins/Restnutzungsdauer unter "🏗️ Objekte" prüfen)</span>' : ''}
+        → AfA-Basis ${fmtEUR(r.afaInfo.afaBasisGesamt)} (${fmtEUR(r.afaInfo.kaufpreisAnteil)} vom Kaufpreis + ${fmtEUR(r.afaInfo.nebenkostenAnteil)} von den Kaufnebenkosten) ×
+        ${(r.afaInfo.afaSatz * 100).toFixed(1).replace(".0", "")} % (${r.afaInfo.afaSatzInfo})
+        = ${fmtEUR(r.afaInfo.afaJahresbetrag)} Jahres-AfA.
+        ${r.afaInfo.hinweisErstjahr ? `<br>${r.afaInfo.hinweisErstjahr} → ${fmtEUR(r.afaInfo.afaJahr)} für ${jahr}.` : ""}
+        <br><i>Kein Gutachten, keine Steuerberatung — Verhältnis basiert auf den selbst gepflegten Annahmen unter "🏗️ Objekte" (Bodenrichtwert, Liegenschaftszins, Restnutzungsdauer).</i>
+      </div>
       ${r.pruefenSumme ? `<div class="warn-note"><b>Zu prüfen (${fmtEUR(r.pruefenSumme)}):</b> ${kategorieListe(r.gruppen.pruefen)} — je nach Umfang sofort abzugsfähig oder als anschaffungsnahe Herstellungskosten über Jahre abzuschreiben.</div>` : ""}
       ${r.tilgungSumme ? `<div class="note">Kredittilgung ${fmtEUR(r.tilgungSumme)}: steuerlich <b>nicht</b> abzugsfähig (reine Darlehensrückzahlung/Vermögensaufbau) — hier nur zur Vollständigkeit erwähnt, nicht in den Werbungskosten enthalten.</div>` : ""}
     </div>`).join("") + `
+    <div class="card" style="box-shadow:none; border:1px solid var(--card-border-soft); margin-bottom:14px">
+      <h3 style="margin-top:0">💶 Geschätzte Steuerwirkung ${jahr} (${objektFilter === "alle" ? "alle ausgewählten Objekte zusammen" : ergebnisse[0].objekt.adresse})</h3>
+      <div class="grid-kpi">
+        <div class="kpi"><div class="label">Vermietungsergebnis (Summe, inkl. AfA)</div><div class="value ${summeVermietungsergebnis >= 0 ? 'green' : 'red'}">${fmtEUR(summeVermietungsergebnis)}</div></div>
+        <div class="kpi"><div class="label">ESt ohne Vermietung</div><div class="value">${fmtEUR(sw.steuerOhne)}</div></div>
+        <div class="kpi"><div class="label">ESt mit Vermietung</div><div class="value">${fmtEUR(sw.steuerMit)}</div></div>
+        <div class="kpi hero"><div class="label">${sw.differenz >= 0 ? "Geschätzte Steuerersparnis/-rückerstattung" : "Geschätzte Steuer-Mehrbelastung"}</div><div class="value ${sw.differenz >= 0 ? 'green' : 'red'}">${fmtEUR(Math.abs(sw.differenz))}</div></div>
+      </div>
+      <div class="note" style="margin:10px 0 0">
+        Berechnet nach § 32a EStG (Grundtarif-Formel, Eckwerte VZ 2026, ${sw.veranlagungsart === "zusammen" ? "Zusammenveranlagung/Splitting" : "Einzelveranlagung"}),
+        ausgehend von ${fmtEUR(sw.zvEBasis)} sonstigem zu versteuerndem Einkommen (unter "Steuer-Einstellungen" oben hinterlegt) —
+        ${sw.zvEBasis === 0 ? '<b>noch kein Einkommen eingetragen, daher nicht belastbar.</b> ' : ""}
+        ${sw.grenzsteuersatzNaeherung != null ? `entspricht an diesem Punkt einem Grenzsteuersatz von ≈ ${sw.grenzsteuersatzNaeherung.toFixed(1)} %. ` : ""}
+        Bewusst ohne Soli/Kirchensteuer. Keine Steuerberatung — insbesondere ersetzt das nicht die tatsächliche Zusammenveranlagung
+        mit allen Einkunftsarten in der echten Steuererklärung.
+      </div>
+    </div>
     <div class="toolbar">
       <button class="ghost" onclick="exportSteuerjahrCsv()">⬇️ Als CSV exportieren</button>
       <button class="ghost" onclick="druckeSteuerjahr()">🖨️ Druckansicht / als PDF speichern</button>
@@ -2699,12 +2891,19 @@ function renderSteuerjahrErgebnis() {
 
 function exportSteuerjahrCsv() {
   if (!letzteSteuerjahrBerechnung) return;
-  const { jahr, ergebnisse } = letzteSteuerjahrBerechnung;
-  const zeilen = [["Objekt","Jahr","Mieteinnahmen","Werbungskosten","Überschuss","AfA-Basis (Kaufnebenkosten)","Zu prüfen","Kredittilgung (nicht abzugsfähig)"]];
+  const { jahr, ergebnisse, steuerwirkung, summeVermietungsergebnis } = letzteSteuerjahrBerechnung;
+  const zeilen = [["Objekt","Jahr","Mieteinnahmen (steuerpflichtig)","Mieteinnahmen steuerfrei (z.B. PV)","Werbungskosten","AfA Gebäude (Jahr)","Vermietungsergebnis inkl. AfA","AfA-Basis (Kaufnebenkosten)","Zu prüfen","Kredittilgung (nicht abzugsfähig)"]];
   for (const r of ergebnisse) {
-    zeilen.push([r.objekt.adresse, jahr, r.einnahmen, r.werbungskostenSumme, r.ueberschuss, r.afaBasisSumme, r.pruefenSumme, r.tilgungSumme]);
+    zeilen.push([r.objekt.adresse, jahr, r.einnahmen, r.einnahmenSteuerfrei, r.werbungskostenSumme, r.afaInfo.afaJahr, r.vermietungsergebnisInklAfa, r.afaBasisSumme, r.pruefenSumme, r.tilgungSumme]);
   }
-  const csv = zeilen.map(z => z.map(v => `"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");
+  if (steuerwirkung) {
+    zeilen.push([]);
+    zeilen.push(["Summe Vermietungsergebnis", "", "", "", "", summeVermietungsergebnis]);
+    zeilen.push(["ESt ohne Vermietung", steuerwirkung.steuerOhne]);
+    zeilen.push(["ESt mit Vermietung", steuerwirkung.steuerMit]);
+    zeilen.push(["Geschätzte Steuerersparnis/-rückerstattung (+ = Erstattung)", steuerwirkung.differenz]);
+  }
+  const csv = zeilen.map(z => z.map(v => `"${String(v == null ? "" : v).replace(/"/g,'""')}"`).join(";")).join("\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -2715,7 +2914,7 @@ function exportSteuerjahrCsv() {
 
 function druckeSteuerjahr() {
   if (!letzteSteuerjahrBerechnung) return;
-  const { jahr, ergebnisse } = letzteSteuerjahrBerechnung;
+  const { jahr, ergebnisse, steuerwirkung, summeVermietungsergebnis } = letzteSteuerjahrBerechnung;
   const w = window.open("", "_blank");
   const kategorieListe = (obj) => Object.entries(obj).map(([k, v]) => `<div>${k}: ${fmtEUR(v)}</div>`).join("") || "<div>–</div>";
   w.document.write(`
@@ -2733,15 +2932,27 @@ function druckeSteuerjahr() {
     ${ergebnisse.map(r => `
       <h2>${r.objekt.adresse}</h2>
       <table>
-        <tr><td>Mieteinnahmen ${jahr}</td><td>${fmtEUR(r.einnahmen)}</td></tr>
+        <tr><td>Mieteinnahmen ${jahr} (steuerpflichtig)</td><td>${fmtEUR(r.einnahmen)}</td></tr>
+        ${r.einnahmenSteuerfrei ? `<tr><td>davon zusätzlich steuerfrei (z.B. PV, § 3 Nr. 72 EStG)</td><td>${fmtEUR(r.einnahmenSteuerfrei)}</td></tr>` : ""}
         <tr><td>Werbungskosten (sofort abzugsfähig)</td><td>${fmtEUR(r.werbungskostenSumme)}</td></tr>
-        <tr><td><b>Überschuss vor Steuern</b></td><td><b>${fmtEUR(r.ueberschuss)}</b></td></tr>
+        <tr><td>AfA Gebäude (${jahr})</td><td>${fmtEUR(r.afaInfo.afaJahr)}</td></tr>
+        <tr><td><b>Vermietungsergebnis (inkl. AfA)</b></td><td><b>${fmtEUR(r.vermietungsergebnisInklAfa)}</b></td></tr>
       </table>
       <p class="muted"><b>Werbungskosten nach Kategorie:</b><br>${kategorieListe(r.gruppen.werbungskosten)}</p>
-      <p class="muted"><b>AfA-Basis / Kaufnebenkosten (nicht sofort abzugsfähig):</b><br>${kategorieListe(r.gruppen.afa)}<br>Kaufpreis Objekt: ${fmtEUR(r.objekt.kaufpreis)} — Aufteilung Grundstück/Gebäude noch zu klären.</p>
+      <p class="muted"><b>AfA-Basis / Kaufnebenkosten (nicht sofort abzugsfähig):</b><br>${kategorieListe(r.gruppen.afa)}<br>Kaufpreis Objekt: ${fmtEUR(r.objekt.kaufpreis)} — Gebäudeanteil ≈ ${(r.afaInfo.verhaeltnisGebaeude * 100).toFixed(1)} % (Schätzung aus Ertragswertverfahren, kein Gutachten).</p>
       ${r.pruefenSumme ? `<div class="warn"><b>Zu prüfen (${fmtEUR(r.pruefenSumme)}):</b> ${kategorieListe(r.gruppen.pruefen)}</div>` : ""}
       ${r.tilgungSumme ? `<p class="muted">Kredittilgung ${fmtEUR(r.tilgungSumme)}: nicht abzugsfähig (Vermögensaufbau), nur zur Vollständigkeit.</p>` : ""}
     `).join("")}
+    ${steuerwirkung ? `
+      <h2>Geschätzte Steuerwirkung ${jahr}</h2>
+      <table>
+        <tr><td>Vermietungsergebnis (Summe, inkl. AfA)</td><td>${fmtEUR(summeVermietungsergebnis)}</td></tr>
+        <tr><td>ESt ohne Vermietung</td><td>${fmtEUR(steuerwirkung.steuerOhne)}</td></tr>
+        <tr><td>ESt mit Vermietung</td><td>${fmtEUR(steuerwirkung.steuerMit)}</td></tr>
+        <tr><td><b>${steuerwirkung.differenz >= 0 ? "Geschätzte Steuerersparnis/-rückerstattung" : "Geschätzte Steuer-Mehrbelastung"}</b></td><td><b>${fmtEUR(Math.abs(steuerwirkung.differenz))}</b></td></tr>
+      </table>
+      <p class="muted">Nach § 32a EStG (Grundtarif, Eckwerte VZ 2026, ${steuerwirkung.veranlagungsart === "zusammen" ? "Zusammenveranlagung" : "Einzelveranlagung"}), ausgehend von ${fmtEUR(steuerwirkung.zvEBasis)} sonstigem zu versteuerndem Einkommen. Ohne Soli/Kirchensteuer. Keine Steuerberatung.</p>
+    ` : ""}
     <script>window.print();<\/script>
     </body></html>`);
   w.document.close();
@@ -2965,6 +3176,7 @@ function renderAll() {
   renderBuchungen();
   renderAutohandel();
   renderFahrzeugbewertung();
+  renderSteuer();
   renderDaten();
 }
 
@@ -2980,6 +3192,7 @@ const VIEW_TITLES = {
   miete:              ["Buchungen", "Mieteinnahmen und Kosten je Objekt erfassen."],
   autohandel:         ["Autohandel", "Fahrzeugbestand mit Kauf- und Verkaufsdaten."],
   fahrzeugbewertung:  ["Fahrzeugbewertung", "Aktuellen Marktwert eines Fahrzeugs einschätzen."],
+  steuer:             ["Steuer", "AfA, Steuerjahr-Export und geschätzte Steuerrückerstattung aus der Vermietung."],
   daten:              ["Daten", "Export, Import und Datenverwaltung."],
 };
 // Erlaubt Buttons außerhalb der Sidebar (z.B. der "+ Neues Objekt"-Button
